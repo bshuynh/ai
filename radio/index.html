@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast Global Finder - BS. Vũ Thế Huynh</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #f8fafc; --text: #1e293b; --author-color: #2563eb; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; display: flex; justify-content: center; color: var(--text); }
+        .app-container { max-width: 700px; width: 100%; }
+        .search-area { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); margin-bottom: 25px; position: sticky; top: 10px; z-index: 100; }
+        .input-group { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        input { flex: 2; min-width: 200px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; }
+        select { flex: 1; min-width: 120px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: white; }
+        button { padding: 12px 25px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        button:hover { background: #4f46e5; transform: translateY(-1px); }
+        
+        .metadata { margin-top: 15px; font-size: 13px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+        .author-name { color: var(--author-color); font-weight: bold; }
+
+        .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 6px solid var(--primary); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.3s; }
+        .card.playing { border-left-color: #10b981; background: #f0fdf4; transform: scale(1.01); }
+        .card-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .card img { width: 70px; height: 70px; border-radius: 10px; margin-right: 15px; object-fit: cover; }
+        .card h3 { margin: 0; font-size: 17px; color: #0f172a; line-height: 1.4; }
+        
+        .launch-date {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .card p { margin: 5px 0 0 0; font-size: 13px; color: #64748b; }
+        audio { width: 100%; margin-top: 15px; border-radius: 8px; height: 40px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="search-area">
+        <h2 style="margin:0; font-size: 24px;">🎙️ Podcast Global Finder</h2>
+        <p style="color: #64748b; font-size: 14px;">Bác sĩ nhập chủ đề để cập nhật thời gian phát hành</p>
+        
+        <div class="input-group">
+            <input type="text" id="topic" placeholder="Chủ đề (ví dụ: rfi, medical, news...)" onkeypress="if(event.key==='Enter') fetchPodcasts()">
+            <select id="lang">
+                <option value="us">Tiếng Anh / Quốc tế</option>
+                <option value="vn">Tiếng Việt</option>
+                <option value="">Tất cả quốc gia</option>
+            </select>
+            <button onclick="fetchPodcasts()">Tìm kiếm</button>
+        </div>
+
+        <div class="metadata">
+            Tác giả: <span class="author-name">BS. Vũ Thế Huynh</span> | Ngày tạo: 11/05/2026
+        </div>
+    </div>
+
+    <div id="resultsList">
+        <p style="text-align:center; color:#94a3b8; margin-top: 50px;">Vui lòng nhập từ khóa để tìm kiếm bài học.</p>
+    </div>
+</div>
+
+<script>
+    function formatLaunchDate(dateString) {
+        if (!dateString) return "📅 Launching: N/A";
+        const d = new Date(dateString);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        const hour = d.getHours().toString().padStart(2, '0');
+        const min = d.getMinutes().toString().padStart(2, '0');
+        return `📅 Launching: ${day}/${month}/${year} | ⏰ ${hour}:${min}`;
+    }
+
+    function fetchPodcasts() {
+        const query = document.getElementById('topic').value.trim();
+        const country = document.getElementById('lang').value;
+        const resultsList = document.getElementById('resultsList');
+        
+        if (!query) return alert("Vui lòng nhập chủ đề!");
+
+        resultsList.innerHTML = "<p style='text-align:center'>Đang tìm kiếm...</p>";
+
+        // Dọn dẹp thẻ script cũ nếu có
+        const oldScript = document.getElementById('jsonp-script');
+        if (oldScript) oldScript.remove();
+
+        // Xây dựng URL API với JSONP Callback
+        let apiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=podcastEpisode&limit=25&callback=handleItunesResponse`;
+        if (country) {
+            apiUrl += `&country=${country}`;
+        }
+
+        // Tạo thẻ script động để vượt qua hoàn toàn rào cản CORS trên file:/// local
+        const script = document.createElement('script');
+        script.id = 'jsonp-script';
+        script.src = apiUrl;
+        script.onerror = function() {
+            resultsList.innerHTML = "<p style='text-align:center; color:red;'>Không thể kết nối. Vui lòng kiểm tra lại kết nối mạng.</p>";
+        };
+        document.body.appendChild(script);
+    }
+
+    // Hàm callback xử lý dữ liệu trả về từ iTunes
+    function handleItunesResponse(data) {
+        const resultsList = document.getElementById('resultsList');
+        
+        if (data.results && data.results.length > 0) {
+            displayResults(data.results);
+        } else {
+            resultsList.innerHTML = "<p style='text-align:center'>Không tìm thấy kết quả phù hợp.</p>";
+        }
+    }
+
+    function displayResults(episodes) {
+        const resultsList = document.getElementById('resultsList');
+        resultsList.innerHTML = "";
+
+        episodes.forEach((ep, index) => {
+            const title = ep.trackName || "Không có tiêu đề";
+            const podcastTitle = ep.collectionName || "Không rõ kênh";
+            const image = ep.artworkUrl100 || ep.artworkUrl600 || "https://via.placeholder.com/70";
+            const audioSrc = ep.episodeUrl || ep.previewUrl || "";
+            const releaseDate = ep.releaseDate;
+
+            const html = `
+                <div class="card" id="card-${index}">
+                    <div class="launch-date">${formatLaunchDate(releaseDate)}</div>
+                    <div class="card-header">
+                        <img src="${image}" alt="cover">
+                        <div>
+                            <h3>${title}</h3>
+                            <p><b>Kênh:</b> ${podcastTitle}</p>
+                        </div>
+                    </div>
+                    <audio id="audio-${index}" controls 
+                           onplay="highlightCard(${index})" 
+                           onended="playNext(${index})">
+                        <source src="${audioSrc}" type="audio/mpeg">
+                        Trình duyệt của bạn không hỗ trợ phát âm thanh.
+                    </audio>
+                </div>
+            `;
+            resultsList.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    function highlightCard(index) {
+        document.querySelectorAll('.card').forEach(card => card.classList.remove('playing'));
+        document.getElementById(`card-${index}`).classList.add('playing');
+    }
+
+    function playNext(index) {
+        const nextAudio = document.getElementById(`audio-${index + 1}`);
+        if (nextAudio) {
+            document.getElementById(`card-${index + 1}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nextAudio.play();
+        }
+    }
+</script>
+
+</body>
+</html>
