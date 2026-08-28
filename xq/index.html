@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-Quang Ngực Lâm Sàng - TTYT Quân Dân Y Đặc Khu Côn Đảo</title>
+    <style>
+        :root {
+            --primary: #0d9488;
+            --primary-dark: #0f766e;
+            --primary-light: #ccfbf1;
+            --secondary: #0284c7;
+            --bg-light: #f8fafc;
+            --card-light: #ffffff;
+            --text-light: #0f172a;
+            --border-color: #cbd5e1;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-light); color: var(--text-light); padding-bottom: 40px; }
+        
+        header {
+            background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+            color: white; padding: 20px; text-align: center; position: relative;
+        }
+        .gift-tag {
+            background-color: rgba(255,255,255,0.2); display: inline-block;
+            padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px;
+        }
+        .header-title { font-size: 1.6rem; font-weight: 800; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+
+        /* Tabs */
+        .tabs { display: flex; background-color: #e2e8f0; padding: 4px; border-radius: 8px; margin-bottom: 15px; gap: 4px; }
+        .tab-btn {
+            flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer;
+            font-weight: 700; background: none; color: #64748b; font-size: 0.85rem;
+        }
+        .tab-btn.active { background-color: white; color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards */
+        .card { background-color: var(--card-light); border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .card-title { font-size: 1.1rem; color: var(--primary); margin-bottom: 12px; border-bottom: 2px solid var(--primary-light); padding-bottom: 4px; }
+
+        /* Checkboxes */
+        .check-item { display: flex; align-items: flex-start; margin-bottom: 8px; cursor: pointer; gap: 8px; }
+        .check-item input[type="checkbox"] { margin-top: 3px; width: 15px; height: 15px; accent-color: var(--primary); }
+        .check-item-text { font-size: 0.9rem; }
+
+        /* Forms & Buttons */
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 2px; font-size: 0.85rem; }
+        .form-control { width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem; }
+        
+        .btn {
+            background-color: var(--primary); color: white; border: none; padding: 8px 16px;
+            font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background-color: #64748b; }
+        .btn-danger { background-color: #ef4444; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        /* Syndrome Accordion */
+        .syndrome-list { display: flex; flex-direction: column; gap: 8px; }
+        .syndrome-header {
+            background-color: #f1f5f9; padding: 10px; border-radius: 6px;
+            cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; font-size: 0.9rem;
+        }
+        .syndrome-content { display: none; padding: 10px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 6px 6px; background-color: #f8fafc; font-size: 0.85rem; }
+
+        /* Case List Table */
+        .case-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        .case-table th, .case-table td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+        .case-table th { background-color: #f1f5f9; font-weight: bold; }
+        .action-btns { display: flex; gap: 5px; }
+        .action-btns .btn { padding: 4px 8px; font-size: 0.75rem; }
+
+        /* Printable Area - Tối ưu hóa phân bổ giãn rộng hoàn hảo cho 1 trang A4 */
+        #print-area {
+            background: white; color: black; padding: 40px 50px;
+            border: 1.5px solid #000; margin-top: 15px; display: none;
+            font-size: 14px; line-height: 1.6;
+        }
+        .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 25px; }
+        .print-header h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+        .print-header h2 { font-size: 13px; font-weight: normal; margin-top: 4px; letter-spacing: 0.5px; }
+        .print-info-grid { display: grid; grid-template-columns: 1.8fr 1fr 1.2fr; margin-bottom: 25px; gap: 15px; border-bottom: 1px dashed #000; padding-bottom: 12px; }
+        .print-section { margin-bottom: 22px; }
+        .print-section-title { font-weight: bold; text-transform: uppercase; font-size: 14px; border-bottom: 1.5px solid #000; display: inline-block; margin-bottom: 8px; padding-bottom: 2px; }
+        .print-continuous-text { text-align: justify; white-space: pre-line; margin-top: 4px; }
+        .print-signature-area { display: flex; justify-content: space-between; margin-top: 75px; }
+        .print-signature-col { text-align: center; width: 240px; }
+
+        @media print {
+            @page { size: A4; margin: 15mm 15mm; }
+            body * { visibility: hidden; background-color: transparent !important; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; border: none !important; padding: 0 !important; margin: 0 !important; display: block !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="gift-tag">Kính tặng TTYT Quân Dân Y Đặc Khu Côn Đảo & BS. Vũ Thế Huynh</div>
+        <h1 class="header-title">CHƯƠNG TRÌNH PHÂN TÍCH X-QUANG NGỰC CHUẨN LÂM SÀNG</h1>
+    </header>
+
+    <div class="container">
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="switchTab(0)">1. ĐÁNH GIÁ CHẤT LƯỢNG & GIẢI PHẪU</button>
+            <button class="tab-btn" onclick="switchTab(1)">2. TRA CỨU 7 HỘI CHỨNG LỚN</button>
+            <button class="tab-btn" onclick="switchTab(2)">3. TRÌNH TẠO PHIẾU KẾT QUẢ</button>
+        </nav>
+
+        <!-- TAB 1 -->
+        <div id="tab-0" class="tab-content active">
+            <div class="grid-2">
+                <div class="card">
+                    <h2 class="card-title">🛡️ TIÊU CHUẨN KỸ THUẬT</h2>
+                    <div class="syndrome-list">
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Hành chính:</b> Họ tên, tuổi, ngày giờ, dấu T/P đầy đủ.</span></label>
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Tia vừa:</b> Thấy vân phổi cách thành ngực 1-2 cm, thấy mạch máu sau tim và đốt sống D1-D4.</span></label>
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Cân đối:</b> Hai đầu trong xương đòn đối xứng qua gai sau cột sống.</span></label>
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Hít sâu:</b> Vòm hoành phải nằm ngang mức đầu trước xương sườn số 6.</span></label>
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Tư thế đứng:</b> Có bóng hơi dạ dày dưới vòm hoành trái, xương bả vai tách khỏi phế trường.</span></label>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="card-title">🔍 ĐỌC GIẢI PHẪU HỆ THỐNG</h2>
+                    <div class="syndrome-list">
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Thành ngực:</b> Đánh giá phần mềm, tính nguyên vẹn xương sườn, xương đòn, cột sống.</span></label>
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Màng phổi:</b> Các góc sườn hoành, góc tâm hoành nhọn sắc nét.</span></label>
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Bóng tim:</b> Đo chỉ số tim/ngực (bình thường &lt; 0.5), hình thái cung tim.</span></label>
+                        <label class="check-item"><input type="checkbox"> <span class="check-item-text"><b>Nhu mô:</b> Độ sáng phế trường, sơ đồ phân bố West, rốn phổi trái cao hơn phải ~1cm.</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2 -->
+        <div id="tab-1" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">📖 TRA CỨU NHANH HỘI CHỨNG LỚN</h2>
+                <div class="syndrome-list">
+                    <div>
+                        <div class="syndrome-header" onclick="toggleAccordion('syn-1')"><span>1. HỘI CHỨNG PHẾ QUẢN</span><span>🔽</span></div>
+                        <div id="syn-1" class="syndrome-content">Thành phế quản dày lên tạo hình ảnh đường ray song song hoặc hình mắt kính. Dấu hiệu gián tiếp: bẫy khí hoặc xẹp phổi co kéo rãnh liên thùy.</div>
+                    </div>
+                    <div>
+                        <div class="syndrome-header" onclick="toggleAccordion('syn-2')"><span>2. HỘI CHỨNG PHẾ NANG</span><span>🔽</span></div>
+                        <div id="syn-2" class="syndrome-content">Đám mờ bờ nhạt nhòa, xu hướng hội tụ dạng bông hoa hồng. Đặc trưng bởi dấu hiệu "phế quản hơi" (Air bronchogram) chạy bên trong.</div>
+                    </div>
+                    <div>
+                        <div class="syndrome-header" onclick="toggleAccordion('syn-3')"><span>3. HỘI CHỨNG KẼ</span><span>🔽</span></div>
+                        <div id="syn-3" class="syndrome-content">Tổn thương bờ sắc nét, không có phế quản khí. Dạng nốt kê (1-3mm), đường Kerley (A, B, C, D) hoặc dạng lưới tổ ong sát màng phổi.</div>
+                    </div>
+                    <div>
+                        <div class="syndrome-header" onclick="toggleAccordion('syn-4')"><span>4. HỘI CHỨNG MẠCH MÁU</span><span>🔽</span></div>
+                        <div id="syn-4" class="syndrome-content">Tái phân bố tuần hoàn đỉnh phổi. Tăng áp động mạch phổi biểu hiện bằng rốn phổi to đối xứng (ria mép cảnh binh) kèm chỉ số Johnson-Wood &gt; 16mm và ngoại vi quá sáng.</div>
+                    </div>
+                    <div>
+                        <div class="syndrome-header" onclick="toggleAccordion('syn-5')"><span>5. HỘI CHỨNG TRUNG THẤT</span><span>🔽</span></div>
+                        <div id="syn-5" class="syndrome-content">Bóng mờ đồng nhất thuộc trung thất, ranh giới ngoài lồi về phía phổi với góc tiếp xúc tù. Có dấu hiệu cổ-ngực, dấu hiệu tảng băng nổi.</div>
+                    </div>
+                    <div>
+                        <div class="syndrome-header" onclick="toggleAccordion('syn-6')"><span>6. HỘI CHỨNG MÀNG PHỔI</span><span>🔽</span></div>
+                        <div id="syn-6" class="syndrome-content">Tràn dịch tự do (mờ đồng nhất vùng thấp, đường cong Damoiseau). Tràn khí (vùng tăng sáng vô mạch ở ngoại vi kèm lá tạng màng phổi co rút).</div>
+                    </div>
+                    <div>
+                        <div class="syndrome-header" onclick="toggleAccordion('syn-7')"><span>7. HỘI CHỨNG HANG</span><span>🔽</span></div>
+                        <div id="syn-7" class="syndrome-content">Ổ khuyết nhu mô tròn chứa khí/dịch. Áp-xe (mức nước-hơi), Hang lao (ở đỉnh, thành mỏng sạch dịch), Khối u hoại tử (thành rất dày nham nhở).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3 -->
+        <div id="tab-2" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">📝 SOẠN THẢO KẾT QUẢ CHẨN ĐOÁN</h2>
+                <form id="report-form" onsubmit="generateReport(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Họ và tên bệnh nhân:</label>
+                            <input type="text" id="pat-name" class="form-control" required placeholder="Nguyễn Văn A">
+                        </div>
+                        <div class="form-group">
+                            <label>Tuổi / Giới tính:</label>
+                            <input type="text" id="pat-age-gender" class="form-control" required placeholder="45 tuổi / Nam">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Chỉ định lâm sàng:</label>
+                            <input type="text" id="clin-indication" class="form-control" placeholder="Ho kéo dài, sốt...">
+                        </div>
+                        <div class="form-group">
+                            <label>Bác sĩ đọc phim:</label>
+                            <input type="text" id="reporting-doctor" class="form-control" required value="BS. Vũ Thế Huynh">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Chọn hội chứng định hướng tổn thương:</label>
+                        <select id="syndrome-select" class="form-control" onchange="autoFillImpressionAndDesc()" style="border: 2px solid var(--primary); font-weight: bold;">
+                            <option value="">-- Chọn hội chứng để tự động lập báo cáo --</option>
+                            <option value="Hội chứng phế nang (Viêm phổi thùy)">Hội chứng phế nang (Viêm phổi thùy/Đông đặc)</option>
+                            <option value="Hội chứng phế quản (Giãn phế quản/Xẹp phổi)">Hội chứng phế quản (Giãn phế quản/Xẹp phổi)</option>
+                            <option value="Hội chứng kẽ (Theo dõi bệnh phổi kẽ/Lao kê)">Hội chứng kẽ (Bệnh phổi kẽ/Lao kê)</option>
+                            <option value="Hội chứng màng phổi (Tràn dịch/Tràn khí màng phổi)">Hội chứng màng phổi (Tràn dịch/Tràn khí màng phổi)</option>
+                            <option value="Hội chứng trung thất (Bóng mờ trung thất)">Hội chứng trung thất (U trung thất/Phình động mạch chủ)</option>
+                            <option value="Hội chứng hang (Áp-xe phổi/Hang lao/Khối u hoại tử)">Hội chứng hang (Áp-xe phổi/Hang lao/U hoại tử)</option>
+                            <option value="Hội chứng mạch máu (Tăng áp phổi/Tái phân bố tuần hoàn)">Hội chứng mạch máu (Tăng áp phổi/Tâm phế mạn)</option>
+                            <option value="Phim X-quang phổi chưa phát hiện tổn thương bệnh lý">Chưa phát hiện bất thường trên phim (Bình thường)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả chi tiết tổn thương (Xuống dòng đơn):</label>
+                        <textarea id="finding-desc" class="form-control" rows="8" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Kết luận:</label>
+                        <input type="text" id="impression" class="form-control" required>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button type="submit" class="btn" style="flex: 2; padding: 12px 20px;">🖨️ Tạo và In Phiếu Kết Quả</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()" style="flex: 1; padding: 12px 20px;">🔄 Ca mới</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Case History Table -->
+            <div class="card">
+                <h2 class="card-title">🗂️ DANH SÁCH CA ĐÃ ĐỌC TRONG NGÀY</h2>
+                <div style="overflow-x: auto;">
+                    <table class="case-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">STT</th>
+                                <th>Họ & Tên</th>
+                                <th>Tuổi/Giới</th>
+                                <th>Chẩn đoán kết luận</th>
+                                <th>Ngày khám</th>
+                                <th style="width: 150px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Printable Form (A4) -->
+            <div id="print-area">
+                <div class="print-header">
+                    <h1>TTYT QUÂN DÂN Y ĐẶC KHU CÔN ĐẢO</h1>
+                    <h2>KẾT QUẢ CHẨN ĐOÁN HÌNH ẢNH X-QUANG PHỔI THƯỜNG QUY</h2>
+                </div>
+                <div class="print-info-grid">
+                    <div><b>Bệnh nhân:</b> <span id="p-name">...</span></div>
+                    <div><b>Tuổi/Giới:</b> <span id="p-age">...</span></div>
+                    <div><b>Ngày khám:</b> <span id="p-date">...</span></div>
+                </div>
+                <div class="print-section">
+                    <p><b>Chỉ định lâm sàng:</b> <span id="p-indication">...</span></p>
+                </div>
+                <div class="print-section">
+                    <div class="print-section-title">Mô tả chi tiết hình ảnh</div>
+                    <p id="p-desc" class="print-continuous-text">...</p>
+                </div>
+                <div class="print-section">
+                    <div class="print-section-title">Kết luận</div>
+                    <p id="p-impression" style="font-weight: bold; font-size: 15px; margin-top: 4px;">...</p>
+                </div>
+                <div class="print-signature-area">
+                    <div class="print-signature-col">
+                        <p><b>KỸ THUẬT VIÊN</b></p>
+                        <p style="margin-top: 70px; font-style: italic; color: #555; font-size: 12px;">(Ký và ghi rõ họ tên)</p>
+                    </div>
+                    <div class="print-signature-col">
+                        <p><i>Côn Đảo, Ngày..... Tháng..... Năm 2026</i></p>
+                        <p style="margin-top: 4px;"><b>BÁC SĨ CHẨN ĐOÁN HÌNH ẢNH</b></p>
+                        <p style="margin-top: 60px; font-weight: bold; font-size: 15px;" id="p-doctor">...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const templates = {
+            "Hội chứng phế nang (Viêm phổi thùy)": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Không phát hiện bất thường mô mềm lồng ngực hai bên. Khung xương sườn, xương đòn nguyên vẹn.\n2. MÀNG PHỔI & CƠ HOÀNH: Vòm hoành phải cao hơn hoành trái 1.5 - 2 cm, bờ cong mềm mại. Các góc sườn hoành hai bên nhọn, không thấy tràn dịch.\n3. TRUNG THẤT & BÓNG TIM: Trung thất cân đối, khí quản nằm dọc đường giữa. Bóng tim trong giới hạn bình thường, chỉ số tim/ngực < 0.5.\n4. NHU MÔ & RỐN PHỔI: Rốn phổi trái cao hơn phải ~1cm. PHÁT HIỆN TỔN THƯƠNG: Đám mờ đậm độ dịch tương đối đồng nhất định khu ở [VỊ TRÍ]. Đám mờ được giới hạn sắc nét bởi rãnh liên thùy kề cận, rãnh liên thùy có dấu hiệu phồng nhẹ về phía lành. Bên trong vùng đông đặc có hình ảnh phế quản hơi (Air bronchogram sign) chạy phân nhánh.",
+                impression: "Theo dõi đông đặc nhu mô phổi thùy/phân thùy ở [VỊ TRÍ] - Hướng tới Viêm phổi thùy (Hội chứng phế nang)."
+            },
+            "Hội chứng phế quản (Giãn phế quản/Xẹp phổi)": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Không phát hiện thấy bất thường phần mềm lồng ngực. Các khoang liên sườn ở [VỊ TRÍ] thu hẹp nhẹ.\n2. MÀNG PHỔI & CƠ HOÀNH: Vòm hoành bên tổn thương nâng cao do hiện tượng xẹp phổi co rút. Các góc sườn hoành nhọn. Rãnh liên thùy bị kéo lệch cong về phía phổi xẹp.\n3. TRUNG THẤT & BÓNG TIM: Khí quản và trung thất kéo lệch nhẹ về phía phổi xẹp. Bóng tim kích thước bình thường.\n4. NHU MÔ & RỐN PHỔI: Rốn phổi bên tổn thương bị kéo cao hoặc hạ thấp theo hướng co rút. PHÁT HIỆN TỔN THƯƠNG: Xuất hiện các đường mờ chạy song song ra ngoại vi tạo hình ảnh \"đường ray\" thể hiện dày thành phế quản ở [VỊ TRÍ]. Quan sát thấy hình ảnh vòng tròn đôi sát động mạch tạo dạng \"mắt kính\" và dải mờ \"ngón tay trong găng\" (Finger-in-glove) do ứ đọng dịch nhầy.",
+                impression: "Dày thành phế quản, giãn phế quản kèm xẹp nhu mô phổi khu trú ở [VỊ TRÍ] (Hội chứng phế quản)."
+            },
+            "Hội chứng kẽ (Theo dõi bệnh phổi kẽ/Lao kê)": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Phần mềm và khung xương lồng ngực bình thường, không tổn thương xương.\n2. MÀNG PHỔI & CƠ HOÀNH: Vòm hoành mềm mại, góc sườn hoành hai bên nhọn, không tràn dịch.\n3. TRUNG THẤT & BÓNG TIM: Trung thất cân đối, bóng tim không to, chỉ số tim/ngực < 0.5.\n4. NHU MÔ & RỐN PHỔI: Rốn phổi đậm độ tăng nhẹ nhưng bờ ngoài vẫn sắc nét. PHÁT HIỆN TỔN THƯƠNG: Xuất hiện nhiều nốt mờ nhỏ dạng kê kích thước đều đặn 1-3mm, ranh giới rõ rệt phân bố lan tỏa khắp hai phế trường. Quan sát thấy các vệt mờ vách liên tiểu thùy tạo đường Kerley B ngắn vùng thấp hai đáy phổi và đường Kerley A vùng đỉnh hướng về rốn phổi.",
+                impression: "Tổn thương dạng kẽ/nốt kê lan tỏa hai phế trường - Theo dõi Lao kê / Bệnh xơ phổi kẽ (Hội chứng kẽ)."
+            },
+            "Hội chứng màng phổi (Tràn dịch/Tràn khí màng phổi)": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Các khoang liên sườn phế trường [TRÁI/PHẢI] giãn rộng nhẹ, phần mềm và khung xương sườn hai bên bình thường.\n2. MÀNG PHỔI & CƠ HOÀNH: PHÁT HIỆN TỔN THƯƠNG: Xuất hiện hình mờ đậm, đồng nhất ở vùng thấp phế trường [TRÁI/PHẢI] với giới hạn trên là đường cong Damoiseau hướng lên trên, xóa vòm hoành và góc sườn hoành. (Hoặc xuất hiện vùng tăng sáng vô mạch ở ngoại vi phế trường [TRÁI/PHẢI], quan sát thấy đường viền mảnh của lá tạng màng phổi co rút về phía rốn phổi).\n3. TRUNG THẤT & BÓNG TIM: Cấu trúc bóng tim, khí quản bị đẩy lệch sang phía phế trường đối diện.\n4. NHU MÔ & RỐN PHỔI: Nhu mô phổi [TRÁI/PHẢI] bị xẹp thụ động hướng về phía rốn phổi; phế trường đối diện thông khí bù tốt.",
+                impression: "Tràn dịch tự do hoặc Tràn khí màng phổi phế trường [TRÁI/PHẢI] (Hội chứng màng phổi)."
+            },
+            "Hội chứng trung thất (Bóng mờ trung thất)": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Thành ngực bình thường, không có tiêu xương sườn hay u mềm lồng ngực xâm lấn.\n2. MÀNG PHỔI & CƠ HOÀNH: Góc sườn hoành và vòm hoành hai bên nhọn, sắc nét.\n3. TRUNG THẤT & BÓNG TIM: PHÁT HIỆN TỔN THƯƠNG: Xuất hiện một bóng mờ đồng nhất, đậm độ dịch nước nằm ở trung thất. Ranh giới ngoài của bóng mờ lồi về phía phổi và tiếp nối liên tục với trung thất, tạo góc tiếp xúc tù. Ranh giới trong bị che lấp bởi bóng trung thất (dấu hiệu bóng). Khí quản bị chèn ép đẩy lệch rõ rệt sang bên [TRÁI/PHẢI].\n4. NHU MÔ & RỐN PHỔI: Nhu mô phổi lân cận bị chèn ép xẹp nhẹ; rốn phổi hai bên kích thước bình thường.",
+                impression: "Bóng mờ bất thường vùng trung thất - Theo dõi U trung thất (Hội chứng trung thất)."
+            },
+            "Hội chứng hang (Áp-xe phổi/Hang lao/Khối u hoại tử)": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Phần mềm lồng ngực và khung xương sườn bình thường.\n2. MÀNG PHỔI & CƠ HOÀNH: Màng phổi và vòm hoành bình thường, góc sườn hoành nhọn.\n3. TRUNG THẤT & BÓNG TIM: Trung thất và bóng tim cân đối, không lệch trục.\n4. NHU MÔ & RỐN PHỔI: Rốn phổi bình thường. PHÁT HIỆN TỔN THƯƠNG: Xuất hiện ổ khuyết nhu mô dạng hang tròn kích thước [KÍCH THƯỚC] mm ở [VỊ TRÍ]. Thành hang [DÀY/MỎNG], bờ trong của hang [ĐỀU/NHAM NHỞ LỆCH TÂM]. Trong lòng hang chứa mức nước - hơi nằm ngang thay đổi theo tư thế đứng (hoặc hang ở đỉnh phổi sạch dịch, có phế quan dẫn lưu nối về rốn phổi tạo hình 'cây vợt' gợi ý hang lao).",
+                impression: "Tổn thương dạng hang ở [VỊ TRÍ] - Theo dõi Áp-xe phổi / Hang lao / U phổi hoại tử (Hội chứng hang)."
+            },
+            "Hội chứng mạch máu (Tăng áp phổi/Tái phân bố tuần hoàn)": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Khung xương lồng ngực và khoang liên sườn hai bên cân đối.\n2. MÀNG PHỔI & CƠ HOÀNH: Cơ hoành hai bên mềm mại, góc sườn hoành hai bên nhọn.\n3. TRUNG THẤT & BÓNG TIM: Bóng tim to, mỏm tim hếch cao (phì đại thất phải). Cung động mạch phổi bờ trái trung thất phồng lớn rõ rệt.\n4. NHU MÔ & RỐN PHỔI: PHÁT HIỆN TỔN THƯƠNG: Vân mạch phổi phân bố bất thường, động mạch đỉnh phổi giãn lớn tương đương hoặc hơn vùng đáy. Rốn phổi hai bên phì đại đối xứng bờ rất rõ nét tạo hình ảnh 'ria mép viên cảnh binh'. Đường kính nhánh xuống động mạch phổi phải (chỉ số Johnson-Wood) giãn lớn > 16 mm. Ngoại vi phế trường sáng bất thường do nghèo nàn mạch máu ngoại vi.",
+                impression: "Hình ảnh phì đại tim phải kèm Tăng áp động mạch phổi - Theo dõi Tâm phế mạn (Hội chứng mạch máu)."
+            },
+            "Phim X-quang phổi chưa phát hiện tổn thương bệnh lý": {
+                desc: "1. THÀNH NGỰC (PHẦN MỀM & KHUNG XƯƠNG): Không phát hiện bất thường phần mềm lồng ngực hai bên. Khung xương sườn, xương đòn, cột sống ngực nguyên vẹn, cấu trúc xương bình thường.\n2. MÀNG PHỔI & CƠ HOÀNH: Vòm hoành hai bên mềm mại, cơ hoành phải cao hơn cơ hoành trái 1.5 - 2 cm. Các góc sườn hoành và góc tâm hoành hai bên nhọn sắc nét, không có tràn dịch hay tràn khí.\n3. TRUNG THẤT & BÓNG TIM: Trung thất cân đối, khí quản nằm dọc đường giữa. Bóng tim và các cung tim trong giới hạn bình thường, chỉ số tim/ngực < 0.5. Quai động mạch chủ không phồng, không vôi hóa.\n4. NHU MÔ & RỐN PHỔI: Hai phế trường sáng đều, thông khí phổi tốt, không thấy tổn thương nhu mô phổi dạng đám mờ hay quá sáng bất thường. Vân phổi phân bố đều đặn theo sơ đồ West, mờ dần ra ngoại vi và biến mất cách thành ngực khoảng 2 cm. Rốn phổi hai bên bình thường, rốn phổi trái cao hơn rốn phổi phải khoảng 1 cm.",
+                impression: "Hiện tại chưa thấy hình ảnh tổn thương bệnh lý cấp - mạn tính trên phim X-quang ngực thẳng."
+            }
+        };
+
+        let cases = [];
+
+        window.onload = function() {
+            loadHistory();
+        };
+
+        function autoFillImpressionAndDesc() {
+            const selectValue = document.getElementById('syndrome-select').value;
+            const descField = document.getElementById('finding-desc');
+            const impField = document.getElementById('impression');
+            if (selectValue && templates[selectValue]) {
+                descField.value = templates[selectValue].desc;
+                impField.value = templates[selectValue].impression;
+            } else {
+                descField.value = "";
+                impField.value = "";
+            }
+        }
+
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-btn');
+            tabs.forEach((tab, i) => { tab.classList.toggle('active', i === index); });
+            buttons.forEach((btn, i) => { btn.classList.toggle('active', i === index); });
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            content.style.display = (content.style.display === "block") ? "none" : "block";
+        }
+
+        function generateReport(event) {
+            event.preventDefault();
+            const patName = document.getElementById('pat-name').value;
+            const patAge = document.getElementById('pat-age-gender').value;
+            const clinInd = document.getElementById('clin-indication').value || "Chưa có chỉ định lâm sàng.";
+            const findDesc = document.getElementById('finding-desc').value;
+            const imp = document.getElementById('impression').value;
+            const docName = document.getElementById('reporting-doctor').value;
+
+            document.getElementById('p-name').textContent = patName;
+            document.getElementById('p-age').textContent = patAge;
+            document.getElementById('p-indication').textContent = clinInd;
+            document.getElementById('p-desc').textContent = findDesc;
+            document.getElementById('p-impression').textContent = imp;
+            document.getElementById('p-doctor').textContent = docName;
+
+            const today = new Date();
+            const dateStr = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
+            document.getElementById('p-date').textContent = dateStr;
+
+            const newCase = {
+                name: patName,
+                age: patAge,
+                indication: clinInd,
+                desc: findDesc,
+                impression: imp,
+                doctor: docName,
+                date: dateStr
+            };
+            cases.push(newCase);
+            saveHistory();
+
+            const printArea = document.getElementById('print-area');
+            printArea.style.display = 'block';
+            window.print();
+        }
+
+        function resetForm() {
+            document.getElementById('pat-name').value = '';
+            document.getElementById('pat-age-gender').value = '';
+            document.getElementById('clin-indication').value = '';
+            document.getElementById('syndrome-select').value = '';
+            document.getElementById('finding-desc').value = '';
+            document.getElementById('impression').value = '';
+            document.getElementById('print-area').style.display = 'none';
+            document.getElementById('report-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function saveHistory() {
+            localStorage.setItem('xquang_condao_cases', JSON.stringify(cases));
+            renderHistoryTable();
+        }
+
+        function loadHistory() {
+            const stored = localStorage.getItem('xquang_condao_cases');
+            if (stored) {
+                cases = JSON.parse(stored);
+            } else {
+                cases = [];
+            }
+            renderHistoryTable();
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('history-tbody');
+            tbody.innerHTML = '';
+            if (cases.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b;">Chưa có ca đọc nào được lưu.</td></tr>`;
+                return;
+            }
+            cases.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><b>${item.name}</b></td>
+                    <td>${item.age}</td>
+                    <td><span style="color: var(--primary-dark); font-weight: 600;">${item.impression}</span></td>
+                    <td>${item.date}</td>
+                    <td class="action-btns">
+                        <button class="btn" onclick="viewCase(${index})">👁️ Xem & In</button>
+                        <button class="btn btn-danger" onclick="deleteCase(${index})">❌ Xóa</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function viewCase(index) {
+            const item = cases[index];
+            document.getElementById('pat-name').value = item.name;
+            document.getElementById('pat-age-gender').value = item.age;
+            document.getElementById('clin-indication').value = item.indication;
+            document.getElementById('finding-desc').value = item.desc;
+            document.getElementById('impression').value = item.impression;
+            document.getElementById('reporting-doctor').value = item.doctor;
+
+            document.getElementById('p-name').textContent = item.name;
+            document.getElementById('p-age').textContent = item.age;
+            document.getElementById('p-indication').textContent = item.indication;
+            document.getElementById('p-desc').textContent = item.desc;
+            document.getElementById('p-impression').textContent = item.impression;
+            document.getElementById('p-doctor').textContent = item.doctor;
+            document.getElementById('p-date').textContent = item.date;
+
+            const printArea = document.getElementById('print-area');
+            printArea.style.display = 'block';
+            printArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function deleteCase(index) {
+            if (confirm('Bác sĩ có chắc chắn muốn xóa ca của bệnh nhân ' + cases[index].name + ' khỏi danh sách?')) {
+                cases.splice(index, 1);
+                saveHistory();
+            }
+        }
+    </script>
+</body>
+</html>
