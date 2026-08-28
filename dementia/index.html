@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Từ Điển MRI Sa Sút Trí Tuệ & Công Cụ Đánh Giá MTA - BS. Vũ Thế Huynh</title>
+    <style>
+        :root {
+            --slate-950: #020617;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-300: #cbd5e1;
+            --sky-400: #38bdf8;
+            --sky-500: #0ea5e9;
+            --blue-500: #3b82f6;
+            --emerald-500: #10b981;
+            --rose-500: #f43f5e;
+            --purple-500: #a855f7;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--slate-950);
+            color: #f1f5f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR STYLING */
+        #sidebar {
+            width: 340px;
+            background-color: var(--slate-900);
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid var(--border-color);
+        }
+
+        .author-badge {
+            background: linear-gradient(135deg, #1e3a8a, #1e1b4b);
+            padding: 18px;
+            border-bottom: 2px solid var(--border-color);
+            text-align: center;
+        }
+
+        .author-badge .role {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--sky-400);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .author-badge .name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .author-badge .sub {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        .search-box {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--slate-950);
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--sky-500);
+        }
+
+        .menu-sections {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .menu-group-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            padding: 12px 20px 6px;
+            font-weight: bold;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 10px 20px;
+            color: var(--slate-300);
+            text-decoration: none;
+            font-size: 0.85rem;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: var(--slate-800);
+            color: #fff;
+        }
+
+        .menu-item.active {
+            background-color: var(--slate-800);
+            color: var(--sky-400);
+            border-left-color: var(--sky-400);
+            font-weight: bold;
+        }
+
+        /* MAIN CONTENT AREA */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: var(--slate-950);
+        }
+
+        #topbar {
+            height: 65px;
+            background-color: var(--slate-900);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            justify-content: space-between;
+        }
+
+        #topbar h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--sky-400);
+        }
+
+        .version-tag {
+            background-color: var(--slate-800);
+            color: var(--slate-300);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+        }
+
+        .view-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* CARDS & CONTAINERS */
+        .card {
+            background: var(--slate-900);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            color: #ffffff;
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title span {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-weight: normal;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* CLINICAL BOXES */
+        .clinical-box {
+            background-color: rgba(16, 185, 129, 0.05);
+            border-left: 4px solid var(--emerald-500);
+            padding: 16px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 16px;
+        }
+
+        .clinical-box strong, .mri-box strong, .pet-box strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .clinical-box strong { color: var(--emerald-500); }
+
+        .mri-box {
+            background-color: rgba(59, 130, 246, 0.05);
+            border-left: 4px solid var(--blue-500);
+            padding: 16px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 16px;
+        }
+        .mri-box strong { color: var(--blue-500); }
+
+        .pet-box {
+            background-color: rgba(168, 85, 247, 0.05);
+            border-left: 4px solid var(--purple-500);
+            padding: 16px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 16px;
+        }
+        .pet-box strong { color: var(--purple-500); }
+
+        ul {
+            list-style-position: inside;
+            margin-left: 8px;
+            color: var(--slate-300);
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* MTA INTERACTIVE LAYOUT */
+        .slider-container {
+            background-color: var(--slate-950);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .slider-label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .slider-val {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--sky-400);
+            background-color: rgba(56, 189, 248, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--slate-800);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--sky-400);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        .svg-card {
+            background-color: var(--slate-950);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            text-align: center;
+        }
+
+        .svg-card h4 {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .dx-output-box {
+            background-color: var(--slate-950);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .scale-level {
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .scale-level:last-child {
+            border-bottom: none;
+        }
+
+        .level-num {
+            font-weight: bold;
+            color: var(--sky-400);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* FOOTER */
+        footer {
+            margin-top: auto;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--slate-950);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <!-- ĐƠN VỊ TÁC GIẢ -->
+        <div class="author-badge">
+            <div class="role">Đồng tác giả biên soạn</div>
+            <div class="name">BS. Vũ Thế Huynh</div>
+            <div class="sub">Hệ thống hóa dựa trên Radiology Assistant 2026</div>
+        </div>
+
+        <!-- TÌM KIẾM NHANH -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Tìm nhanh bệnh lý, thang điểm..." onkeyup="filterMenu()">
+        </div>
+
+        <!-- DANH SÁCH MENU -->
+        <div class="menu-sections" id="menuList">
+            <div class="menu-group-title">Thang đo lượng giá</div>
+            <div class="menu-item active" onclick="showSection('mta-section')">Thang điểm MTA (Hồi hải mã)</div>
+            <div class="menu-item" onclick="showSection('koedam-section')">Thang điểm Koedam (Thùy đỉnh)</div>
+            <div class="menu-item" onclick="showSection('fazekas-section')">Thang điểm Fazekas (Chất trắng)</div>
+            <div class="menu-item" onclick="showSection('gca-section')">Thang điểm GCA (Toàn vỏ não)</div>
+
+            <div class="menu-group-title">Từ điển 13 bệnh lý</div>
+            <div class="menu-item" onclick="showSection('disease-ad')">1. Bệnh Alzheimer (AD)</div>
+            <div class="menu-item" onclick="showSection('disease-vad')">2. SSTT mạch máu (VaD)</div>
+            <div class="menu-item" onclick="showSection('disease-ftld')">3. SSTT thùy Trán - Thái dương</div>
+            <div class="menu-item" onclick="showSection('disease-dlb')">4. SSTT thể Lewy (DLB)</div>
+            <div class="menu-item" onclick="showSection('disease-psp')">5. Liệt trên nhân tiến triển (PSP)</div>
+            <div class="menu-item" onclick="showSection('disease-msa')">6. Teo đa hệ thống (MSA)</div>
+            <div class="menu-item" onclick="showSection('disease-cadasil')">7. Hội chứng CADASIL</div>
+            <div class="menu-item" onclick="showSection('disease-caa')">8. Bệnh mạch máu dạng bột (CAA)</div>
+            <div class="menu-item" onclick="showSection('disease-cjd')">9. Bệnh Creutzfeldt-Jakob (CJD)</div>
+            <div class="menu-item" onclick="showSection('disease-huntington')">10. Bệnh Huntington</div>
+            <div class="menu-item" onclick="showSection('disease-alsp')">11. Chất trắng di truyền ALSP</div>
+            <div class="menu-item" onclick="showSection('disease-aria')">12. Biến chứng điều trị ARIA</div>
+            <div class="menu-item" onclick="showSection('disease-tbi')">13. Di chứng chấn thương sọ não</div>
+
+            <div class="menu-group-title">Kỹ thuật & Phác đồ</div>
+            <div class="menu-item" onclick="showSection('mri-protocol')">Phác đồ chuỗi xung MRI chuẩn</div>
+        </div>
+
+        <!-- FOOTER TRONG SIDEBAR -->
+        <footer>
+            Bản quyền lâm sàng &copy; 2026<br>
+            Biên dịch & Thiết kế: BS. Vũ Thế Huynh
+        </footer>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main-content">
+        <div id="topbar">
+            <h1 id="view-title">Thang điểm MTA (Hồi hải mã)</h1>
+            <div class="version-tag">MTA Simulator v2.5</div>
+        </div>
+
+        <div class="view-container">
+
+            <!-- ================= SECTION 1: MTA INTERACTIVE EVALUATOR ================= -->
+            <div id="mta-section" class="content-section">
+                <div class="grid-2">
+                    <!-- TRÁI: ĐIỀU KHIỂN & LÝ THUYẾT -->
+                    <div>
+                        <div class="card">
+                            <div class="card-title">Hướng Dẫn Phân Độ MTA <span>(Barkhof Visual Rating Scale)</span></div>
+                            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">Chấm điểm dựa trên 3 tiêu chí giải phẫu: Độ rộng khe màng mạch, độ rộng sừng thái dương và chiều cao hồi hải mã.</p>
+                            
+                            <div class="scale-level">
+                                <span class="level-num">Độ 0 (MTA 0):</span> Cấu trúc giải phẫu hoàn hảo. Không teo hồi hải mã.
+                            </div>
+                            <div class="scale-level">
+                                <span class="level-num">Độ 1 (MTA 1):</span> Chỉ rộng khe màng mạch (choroid fissure).
+                            </div>
+                            <div class="scale-level">
+                                <span class="level-num">Độ 2 (MTA 2):</span> Rộng khe màng mạch + Rộng sừng thái dương của não thất bên.
+                            </div>
+                            <div class="scale-level">
+                                <span class="level-num">Độ 3 (MTA 3):</span> Giảm chiều cao hồi hải mã mức độ trung bình (teo vừa).
+                            </div>
+                            <div class="scale-level">
+                                <span class="level-num">Độ 4 (MTA 4):</span> Teo hồi hải mã cực độ. Thể tích nhu mô còn lại rất ít, sừng thái dương giãn lớn.
+                            </div>
+                        </div>
+
+                        <div class="card" style="background-color: rgba(30, 41, 59, 0.5);">
+                            <div class="card-title">Bộ Điều Khiển Mô Phỏng Giải Phẫu Học</div>
+                            
+                            <div class="control-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 6px;">Chọn nhóm tuổi của bệnh nhân:</label>
+                                <select id="age-select" onchange="evaluateMTA()" style="width:100%; padding:10px; background:#020617; border:1px solid var(--border-color); color:#fff; border-radius:6px;">
+                                    <option value="under75">Dưới 75 tuổi (Mối cắt bệnh lý MTA &ge; 1.5)</option>
+                                    <option value="over75">Từ 75 tuổi trở lên (Mối cắt bệnh lý MTA &ge; 2.0)</option>
+                                </select>
+                            </div>
+
+                            <!-- PHẢI -->
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <span class="slider-label">MTA Bán Cầu Phải (Phải bệnh nhân)</span>
+                                    <span class="slider-val" id="val-right">Độ 0</span>
+                                </div>
+                                <input type="range" id="mta-right" min="0" max="4" value="0" oninput="updateVisuals()">
+                            </div>
+
+                            <!-- TRÁI -->
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <span class="slider-label">MTA Bán Cầu Trái (Trái bệnh nhân)</span>
+                                    <span class="slider-val" id="val-left">Độ 0</span>
+                                </div>
+                                <input type="range" id="mta-left" min="0" max="4" value="0" oninput="updateVisuals()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHẢI: HÌNH ẢNH SVG MINH HỌA & CHẨN ĐOÁN LÂM SÀNG -->
+                    <div style="display: flex; flex-direction: column; gap: 24px;">
+                        <div class="grid-2">
+                            <!-- BÁN CẦU PHẢI -->
+                            <div class="svg-card">
+                                <h4>Bán cầu PHẢI (Bên Trái màn hình)</h4>
+                                <div id="svg-box-right" style="width: 100%; max-width: 200px; margin: 0 auto;"></div>
+                            </div>
+                            <!-- BÁN CẦU TRÁI -->
+                            <div class="svg-card">
+                                <h4>Bán cầu TRÁI (Bên Phải màn hình)</h4>
+                                <div id="svg-box-left" style="width: 100%; max-width: 200px; margin: 0 auto;"></div>
+                            </div>
+                        </div>
+
+                        <!-- KẾT QUẢ CHẨN ĐOÁN TỰ ĐỘNG -->
+                        <div class="dx-output-box" id="dx-box">
+                            <div style="display: flex; align-items: center; margin-bottom: 12px; font-weight: bold; font-size: 1rem;">
+                                Kết luận lâm sàng:
+                                <span id="dx-badge" class="status-badge">Đang tải...</span>
+                            </div>
+                            <div id="dx-text" style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+                                Đang xử lý các dữ liệu giải phẫu...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= SECTION 2: KOEDAM ================= -->
+            <div id="koedam-section" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Thang điểm Koedam <span>(Posterior Cortical Atrophy - PCA)</span></div>
+                    <div class="mri-box">
+                        <strong>Khu vực khảo sát & kỹ thuật:</strong>
+                        Lượng giá teo thùy đỉnh sau (hồi trước chêm/precuneus, rãnh liên đỉnh, rãnh đai sau và rãnh đỉnh-chẩm) phối hợp trên 3 mặt phẳng Sagittal, Coronal và Axial. Lấy điểm cao nhất nếu có sự khác biệt giữa các mặt phẳng.
+                    </div>
+                    
+                    <div class="scale-level"><span class="level-num">Koedam 0:</span> Không teo vỏ não; các rãnh thùy đỉnh và precuneus đóng kín bình thường.</div>
+                    <div class="scale-level"><span class="level-num">Koedam 1:</span> Teo nhẹ vỏ thùy đỉnh; mở rộng nhẹ rãnh đai sau và rãnh đỉnh-chẩm.</div>
+                    <div class="scale-level"><span class="level-num">Koedam 2:</span> Teo thùy đỉnh mức độ rõ rệt; các rãnh vỏ não thùy đỉnh rộng đáng kể.</div>
+                    <div class="scale-level"><span class="level-num">Koedam 3:</span> Teo vỏ não thùy đỉnh giai đoạn cuối dạng "lưỡi dao" (knife-blade); các rãnh liên đỉnh và đai sau giãn rộng cực độ.</div>
+
+                    <div class="clinical-box" style="margin-top: 20px;">
+                        <strong>Ý nghĩa lâm sàng thực tế:</strong>
+                        Thang điểm này là chỉ dấu nhạy bén cho bệnh nhân Alzheimer khởi phát trẻ tuổi (trước tuổi già, &lt;65 tuổi), là nhóm đối tượng thường có điểm MTA hoàn toàn bình thường ở giai đoạn sớm của bệnh.
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= SECTION 3: FAZEKAS ================= -->
+            <div id="fazekas-section" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Thang điểm Fazekas <span>(White Matter Hyperintensities - WMH)</span></div>
+                    <div class="mri-box">
+                        <strong>Xung khảo sát:</strong> Lượng giá trên chuỗi xung Axial FLAIR hoặc T2-W để đánh giá bệnh lý mạch máu nhỏ dưới dạng các ổ tăng tín hiệu chất trắng.
+                    </div>
+
+                    <div class="scale-level"><span class="level-num">Fazekas 0:</span> Không có hoặc có rất ít tổn thương chất trắng dạng chấm nhỏ.</div>
+                    <div class="scale-level"><span class="level-num">Fazekas 1:</span> Nhiều tổn thương dạng đốm chấm rải rác tách biệt nhau. (Được chấp nhận là sinh lý bình thường của quá trình lão hóa ở người cao tuổi).</div>
+                    <div class="scale-level"><span class="level-num">Fazekas 2:</span> Các tổn thương bắt đầu hội tụ bán phần (tạo các cầu nối tổn thương). (Coi là bất thường bệnh lý).</div>
+                    <div class="scale-level"><span class="level-num">Fazekas 3:</span> Các mảng tổn thương lớn, hội tụ lan tỏa chiếm diện rộng của chất trắng đại não.</div>
+
+                    <div class="clinical-box" style="margin-top: 20px; background-color: rgba(244, 63, 94, 0.05); border-left-color: var(--rose-500);">
+                        <strong>Giá trị tiên lượng:</strong>
+                        Fazekas độ 2 và 3 độc lập dự báo nguy cơ cao suy giảm chức năng vận động toàn thân nhanh chóng và tàn phế tiến triển trong vòng 1-3 năm.
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= SECTION 4: GCA ================= -->
+            <div id="gca-section" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Thang điểm GCA <span>(Global Cortical Atrophy)</span></div>
+                    <div class="mri-box">
+                        <strong>Mô tả:</strong> Lượng giá mức độ teo vỏ đại não toàn thể trung bình trên toàn bộ các thùy não. Khảo sát chính xác nhất trên chuỗi xung T1-Weighted.
+                    </div>
+
+                    <div class="scale-level"><span class="level-num">GCA 0:</span> Không teo vỏ não. Các hồi não khít chặt.</div>
+                    <div class="scale-level"><span class="level-num">GCA 1:</span> Teo nhẹ, các rãnh cuộn não (sulci) bắt đầu mở rộng.</div>
+                    <div class="scale-level"><span class="level-num">GCA 2:</span> Teo mức độ trung bình, giảm thể tích rõ rệt của nhu mô các hồi não (gyri).</div>
+                    <div class="scale-level"><span class="level-num">GCA 3:</span> Teo nặng nề giai đoạn cuối, các hồi cuộn não mỏng và nhọn hoắt như "lưỡi dao" (knife blade).</div>
+                </div>
+            </div>
+
+            <!-- ================= SECTION 5: 13 DISEASES DICTIONARY ================= -->
+            <!-- 1. ALZHEIMER -->
+            <div id="disease-ad" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Bệnh Alzheimer (AD)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Suy giảm nghiêm trọng trí nhớ gần tiến triển, rối loạn định hướng không gian, suy giảm nhận thức diễn biến từ từ trong nhiều năm.
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Teo nghiêm trọng hồi hải mã đối xứng hoặc không đối xứng nhẹ -> <strong>MTA bất thường</strong> (MTA &ge; 1.5 ở người &lt; 75 tuổi, hoặc &ge; 2.0 ở người &ge; 75 tuổi).</li>
+                            <li>Teo chọn lọc thùy đỉnh sau vỏ não, rõ rệt nhất ở vùng <strong>precuneus (hồi trước chêm)</strong> (Koedam từ độ 1-3).</li>
+                            <li>Lắng đọng sắt hoặc các ổ vi xuất huyết thùy não (lobar microbleeds) rải rác ngoại vi vỏ não trên chuỗi xung SWI/T2*.</li>
+                        </ul>
+                    </div>
+                    <div class="pet-box">
+                        <strong>Cận lâm sàng hỗ trợ (PET):</strong>
+                        FDG-PET ghi nhận vùng giảm chuyển hóa glucose đặc thù ở đỉnh - thái dương (parietotemporal) và vỏ não đai sau. Amyloid-PET hiển thị độ hấp thu rất cao ở vỏ não kèm hiện tượng xóa mờ ranh giới chất xám/chất trắng.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. VAD -->
+            <div id="disease-vad" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Sa Sút Trí Tuệ Mạch Máu (VaD)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Khởi phát suy giảm nhận thức đột ngột sau các đợt tai biến mạch máu hoặc suy giảm trí tuệ kiểu bậc thang (stepwise decline).
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Các ổ <strong>nhồi máu vùng chiến lược</strong> (strategic infarctions) liên quan đến chức năng nhận thức: nhồi máu đồi thị hai bên (vùng cận trung tâm), nhồi máu vùng liên hợp đỉnh-thái dương bán cầu ưu thế, nhồi máu động mạch não trước hai bên.</li>
+                            <li>Tổn thương tăng tín hiệu chất trắng lan rộng hội tụ (<strong>Fazekas 2 hoặc 3</strong>) kèm nhiều ổ khuyết (lacunes) ở chất trắng thùy trán (&gt;2) và nhân nền (&gt;2).</li>
+                            <li>Trong thể VaD thuần túy, hồi hải mã thường giữ nguyên thể tích không bị teo (MTA 1).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. FTLD -->
+            <div id="disease-ftld" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Sa Sút Trí Tuệ Thùy Trán - Thái Dương (FTLD)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Biến đổi tính cách, mất kiểm soát hành vi xã hội nổi bật, hoặc thất ngôn tiến triển (thường xuất hiện sớm ở người trẻ &lt;65 tuổi).
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Teo nhu mô vỏ não rất **bất đối xứng**, khu trú rõ rệt ở thùy trán và/hoặc thùy thái dương.</li>
+                            <li>Trong biến thể ngôn ngữ (Semantic Dementia): Teo cực kỳ nghiêm trọng và bất đối xứng thùy thái dương bên TRÁI (gồm cả cực thái dương và hồi hải mã) mỏng sắc cạnh như **"lưỡi dao" (knife-blade atrophy)**.</li>
+                            <li>Tăng tín hiệu trên FLAIR tại vỏ não bị ảnh hưởng do phản ứng gliosis (tăng sinh tế bào đệm).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. DLB -->
+            <div id="disease-dlb" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Sa Sút Trí Tuệ Thể Lewy (DLB)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Trạng thái nhận thức dao động mạnh theo chu kỳ, ảo thị chi tiết và sinh động, run/đơ cứng kiểu Parkinson và rối loạn hành vi giấc ngủ REM.
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li><strong>Hồi hải mã bình thường:</strong> MRI cấu trúc não không ghi nhận hiện tượng teo hồi hải mã (MTA bình thường). Đây là chìa khóa phân biệt cốt lõi với bệnh Alzheimer.</li>
+                            <li>DaTscan (xạ hình thụ thể Dopamine) ghi nhận giảm hoạt động của các neuron dopaminergic tại vùng thể vân.</li>
+                        </ul>
+                    </div>
+                    <div class="clinical-box" style="background-color: rgba(244, 63, 94, 0.05); border-left-color: var(--rose-500);">
+                        <strong>Chỉ định nguy hiểm:</strong> Bệnh nhân DLB cực kỳ nhạy cảm với các thuốc an thần (neuroleptic sensitivity) - chống chỉ định tuyệt đối sử dụng các thuốc chống loạn thần thế hệ cũ để tránh tử vong.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. PSP -->
+            <div id="disease-psp" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Liệt Trên Nhân Tiến Triển (PSP)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Rối loạn thăng bằng sớm gây té ngã về phía sau, liệt vận nhãn hướng dọc (liếc nhìn lên/xuống khó khăn) và đơ cứng trục cơ thể.
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Teo nghiêm trọng cấu trúc <strong>não giữa (mesencephalon)</strong>.</li>
+                            <li>Bờ trên của não giữa (vốn bình thường có dạng lồi) bị teo xẹp tạo nên hình ảnh **bờ lõm**, hiển thị dấu hiệu <strong>"chim ruồi" (hummingbird sign)</strong> hoặc "chim cánh cụt" kinh điển trên lát đứng dọc giữa (Sagittal T1-W).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. MSA -->
+            <div id="disease-msa" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Teo Đa Hệ Thống (MSA)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Rối loạn thần kinh thực vật nghiêm trọng (hạ huyết áp tư thế đứng, tiểu không tự chủ) phối hợp thất điều đi đứng loạng choạng (MSA-C) hoặc cứng đơ cơ (MSA-P).
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Teo nghiêm trọng cầu não (pons) và bán cầu tiểu não.</li>
+                            <li><strong>Dấu hiệu "bánh mì chữ thập nóng" (hot cross bun sign):</strong> Đường tăng tín hiệu chữ thập ở cầu não trên xung T2-W do xơ hóa các sợi cầu não ngang (đặc trưng của thể MSA-C).</li>
+                            <li>Trong thể MSA-P: Giảm tín hiệu nhân bèo sẫm ngoài kèm một dải tăng tín hiệu dạng khe cực mỏng chạy lân cận ở phía ngoài (slit-like hyperintensity).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. CADASIL -->
+            <div id="disease-cadasil" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Hội Chứng CADASIL</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Đau nửa đầu (migraine) dai dẳng, đột quỵ thiếu máu não tái diễn ở người trẻ tuổi và suy giảm nhận thức tiến triển dần.
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Tổn thương chất trắng hội tụ sâu, đối xứng hai bên đại não.</li>
+                            <li>Dấu hiệu chỉ điểm: Tổn thương lan rộng ảnh hưởng chọn lọc và rõ nét nhất đến <strong>thùy thái dương trước (anterior temporal lobes)</strong> và bao ngoài (external capsules).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. CAA -->
+            <div id="disease-caa" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Bệnh Mạch Máu Dạng Bột (CAA)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Sa sút trí tuệ ở người cao tuổi đi kèm nguy cơ xuất huyết thùy não tái phát diện rộng (đặc biệt nguy hiểm nếu dùng thuốc chống đông).
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li><strong>Xung T2*/SWI:</strong> Vô số đốm vi xuất huyết thùy não nhỏ giảm tín hiệu (lobar microbleeds) phân bố rải rác ở ngoại vi (vỏ não và dưới vỏ).</li>
+                            <li><strong>Xung FLAIR:</strong> Tổn thương chất trắng mức độ Fazekas 2-3, thường chiếm ưu thế rõ nét ở <strong>vùng chẩm phía sau</strong>.</li>
+                            <li>Dấu hiệu đóng bánh sắt màng não vỏ não nông (convexity superficial siderosis).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. CJD -->
+            <div id="disease-cjd" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Bệnh Creutzfeldt-Jakob (CJD)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Sa sút trí tuệ tiến triển cực kỳ nhanh chóng (bệnh nhân suy kiệt, tử vong trong vài tuần đến vài tháng) kèm co giật giật cơ (myoclonus).
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Tổn thương dạng xốp ở chất xám vỏ não và thể vân (striatum).</li>
+                            <li><strong>Xung DWI (nhạy nhất):</strong> Ghi nhận hạn chế khuếch tán rõ rệt dạng **"ruy băng vỏ não" (cortical ribboning)** và/hoặc tăng tín hiệu bất thường đối xứng/bất đối xứng ở nhân đuôi và nhân bèo sẫm.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10. HUNTINGTON -->
+            <div id="disease-huntington" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Bệnh Huntington</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Vận động múa giật (chorea) toàn thân, rối loạn hành vi tâm thần nặng nề và sa sút trí tuệ tiến triển ở tuổi trung niên.
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Teo khu trú đối xứng cực kỳ đặc thù của <strong>nhân đuôi (caudate nucleus)</strong> ở cả hai bên đại não.</li>
+                            <li>Hậu quả gây **giãn rộng thứ phát sừng trán** của não thất bên (tạo hình ảnh sừng trán hình cánh bướm rộng).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 11. ALSP -->
+            <div id="disease-alsp" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Chất Trắng Di Truyền Liên Quan CSF1R (ALSP)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Suy giảm trí tuệ, rối loạn tâm thần và suy giảm vận động tiến triển ở tuổi trung niên (40–60 tuổi).
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Tổn thương chất trắng đối xứng đa ổ, chiếm ưu thế rõ rệt ở **thùy trán**.</li>
+                            <li>Có các <strong>ổ hạn chế khuếch tán khu trú đặc thù trên xung DWI</strong> nằm lọt bên trong vùng tổn thương chất trắng.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 12. ARIA -->
+            <div id="disease-aria" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Biến Chứng Liên Quan Liệu Pháp Kháng Thể Amyloid (ARIA)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Tác dụng phụ tăng tính thấm thành mạch ở bệnh nhân Alzheimer đang điều trị bằng các liệu pháp kháng thể đơn dòng kháng beta-amyloid mới (như lecanemab, aducanumab).
+                    </div>
+                    <div class="mri-box">
+                        <strong>Hai biến thể hình ảnh chính trên MRI:</strong>
+                        <ul>
+                            <li><strong>ARIA-E (Vasogenic Edema):</strong> Phù nề nhu mô não hoặc tràn dịch màng não, hiển thị dưới dạng tăng tín hiệu trên xung FLAIR (ưu thế thùy chẩm sau).</li>
+                            <li><strong>ARIA-H (Hemosiderin Deposition):</strong> Lắng đọng sắt dưới dạng vi xuất huyết thùy hoặc đóng bánh sắt màng não trên xung T2*/SWI.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 13. TBI -->
+            <div id="disease-tbi" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Di Chứng Chấn Thương Sọ Não (TBI)</div>
+                    <div class="clinical-box">
+                        <strong>Rối loạn lâm sàng chính:</strong>
+                        Suy giảm trí nhớ, kém tập trung và nhận thức kéo dài sau tai nạn, va đập đầu cũ.
+                    </div>
+                    <div class="mri-box">
+                        <strong>Dấu hiệu MRI cốt lõi:</strong>
+                        <ul>
+                            <li>Tổn thương mất nhu mô não cũ kèm phản ứng tăng tín hiệu gliosis viền trên xung FLAIR khu trú ở vùng **dưới trán (frontobasal)** và cực thùy thái dương.</li>
+                            <li>Các đốm vi xuất huyết cũ giảm tín hiệu trên xung T2*/SWI do tổn thương sợi trục lan tỏa (DAI) phân bố dọc theo ranh giới chất xám - chất trắng.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= SECTION 6: MRI PROTOCOL ================= -->
+            <div id="mri-protocol" class="content-section hidden">
+                <div class="card">
+                    <div class="card-title">Phác Đồ Chuỗi Xung MRI Sa Sút Trí Tuệ Chuẩn Hóa</div>
+                    <p style="margin-bottom: 20px; color: #94a3b8; font-size:0.9rem;">Để đánh giá toàn diện các thang điểm và bệnh lý trên, phác đồ MRI bắt buộc phải bao gồm 5 chuỗi xung chủ đạo sau:</p>
+
+                    <div class="mri-box">
+                        <strong>1. Coronal-Oblique T1-Weighted (Cắt mỏng vuông góc)</strong>
+                        <p style="font-size: 0.85rem; color:#cbd5e1;">Cắt vuông góc với trục dọc hồi hải mã (song song thân não). Đây là xung bản lề để đo lường thang điểm teo hồi hải mã MTA, đánh giá thùy đỉnh (Koedam) và hố sau.</p>
+                    </div>
+
+                    <div class="mri-box">
+                        <strong>2. Axial FLAIR</strong>
+                        <p style="font-size: 0.85rem; color:#cbd5e1;">Đánh giá tổn thương tăng tín hiệu chất trắng (thang điểm Fazekas), teo vỏ não toàn cầu (GCA), phù nề ARIA-E hoặc các vùng nhồi máu cũ diện rộng.</p>
+                    </div>
+
+                    <div class="mri-box">
+                        <strong>3. Axial T2-Weighted</strong>
+                        <p style="font-size: 0.85rem; color:#cbd5e1;">Xác định chuẩn xác các ổ khuyết mạch máu nhỏ (lacunar infarcts) tại vùng đồi thị và hạch nền (vị trí rất hay bị che lấp trên xung FLAIR).</p>
+                    </div>
+
+                    <div class="mri-box">
+                        <strong>4. T2*-Weighted hoặc SWI (Xung nhạy từ)</strong>
+                        <p style="font-size: 0.85rem; color:#cbd5e1;">Tìm kiếm vi xuất huyết thùy (đặc trưng cho CAA, Alzheimer, ARIA-H), xuất huyết sâu (tăng huyết áp) hoặc dấu hiệu đóng bánh sắt bề mặt màng não.</p>
+                    </div>
+
+                    <div class="mri-box">
+                        <strong>5. Diffusion-Weighted Imaging (DWI)</strong>
+                        <p style="font-size: 0.85rem; color:#cbd5e1;">Xung bổ trợ bắt buộc ở bệnh nhân trẻ hoặc tiến triển nhanh để loại trừ CJD, ALSP hoặc bệnh cảnh viêm mạch máu não.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Hàm sinh mã SVG động dựa theo phân độ MTA (Radiological Convention)
+        function generateMtaSvg(grade, isLeft) {
+            let cf_path = "";
+            let th_path = "";
+            let hc_path = "";
+            
+            // Lật ngược hình ảnh đối xứng cho bán cầu Trái (isLeft = true)
+            let transform = isLeft ? "transform='scale(-1, 1) translate(-220, 0)'" : "";
+
+            if (grade === 0) {
+                cf_path = '<path d="M 115,50 C 117,55 119,60 120,65" stroke="#4a5568" stroke-width="1.5" fill="none" />';
+                th_path = '<path d="M 85,115 C 80,110 75,100 80,95" stroke="#4a5568" stroke-width="1" fill="none" />';
+                hc_path = '<path d="M 85,115 C 75,95 85,60 110,60 C 130,60 140,85 130,105 C 120,115 100,120 85,115 Z" fill="#b794f4" stroke="#805ad5" stroke-width="1.5" />';
+            } else if (grade === 1) {
+                cf_path = '<path d="M 110,48 C 117,54 122,62 125,72 C 122,68 116,60 110,54 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />';
+                th_path = '<path d="M 85,115 C 80,110 75,100 80,95" stroke="#4a5568" stroke-width="1" fill="none" />';
+                hc_path = '<path d="M 85,115 C 75,95 85,60 110,60 C 124,60 134,84 125,104 C 118,114 100,120 85,115 Z" fill="#b794f4" stroke="#805ad5" stroke-width="1.5" />';
+            } else if (grade === 2) {
+                cf_path = '<path d="M 108,45 C 118,52 124,62 128,75 C 122,70 114,60 106,53 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />';
+                th_path = '<path d="M 85,118 C 76,112 70,100 76,90 C 79,95 82,108 88,112 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />';
+                hc_path = '<path d="M 86,112 C 78,95 86,63 108,63 C 122,63 130,84 122,102 C 116,110 100,116 86,112 Z" fill="#c084fc" stroke="#805ad5" stroke-width="1.5" />';
+            } else if (grade === 3) {
+                cf_path = '<path d="M 105,42 C 118,50 126,62 130,80 C 120,72 110,60 100,52 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />';
+                th_path = '<path d="M 88,122 C 72,114 64,98 72,86 C 77,94 82,108 92,114 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />';
+                hc_path = '<path d="M 90,114 C 82,98 90,72 108,72 C 120,72 124,90 118,104 C 112,110 100,116 90,114 Z" fill="#e9d8fd" stroke="#a855f7" stroke-width="1.5" />';
+            } else {
+                cf_path = '<path d="M 100,40 C 120,50 130,65 135,85 C 118,74 108,60 95,50 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />';
+                th_path = '<path d="M 90,125 C 68,115 58,94 68,80 C 74,90 82,108 95,116 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />';
+                hc_path = '<path d="M 92,116 C 88,104 94,85 106,85 C 115,85 116,98 112,108 C 108,112 100,116 92,116 Z" fill="#f5f3ff" stroke="#c084fc" stroke-width="1.5" />';
+            }
+
+            return `
+            <svg viewBox="0 0 220 180" width="100%">
+                <g ${transform}>
+                    <path d="M 15,35 L 205,35 L 205,165 L 15,165 Z" fill="#1e293b" opacity="0.4" />
+                    <path d="M 60,140 C 50,110 60,60 110,40 C 145,40 160,80 150,120 C 140,140 100,150 60,140 Z" fill="#020617" />
+                    ${cf_path}
+                    ${th_path}
+                    ${hc_path}
+                    
+                    <line x1="45" y1="90" x2="95" y2="90" stroke="#475569" stroke-width="0.8" stroke-dasharray="2,2" />
+                    <circle cx="95" cy="90" r="2" fill="#64748b" />
+                    <line x1="175" y1="55" x2="118" y2="55" stroke="#475569" stroke-width="0.8" stroke-dasharray="2,2" />
+                    <circle cx="118" cy="55" r="2" fill="#64748b" />
+                    <line x1="175" y1="110" x2="80" y2="110" stroke="#475569" stroke-width="0.8" stroke-dasharray="2,2" />
+                    <circle cx="80" cy="110" r="2" fill="#64748b" />
+                </g>
+                <text x="${isLeft ? 40 : 180}" y="58" fill="#94a3b8" font-size="8.5" font-weight="bold" text-anchor="${isLeft ? 'end' : 'start'}">Khe màng mạch</text>
+                <text x="${isLeft ? 180 : 40}" y="93" fill="#94a3b8" font-size="8.5" font-weight="bold" text-anchor="${isLeft ? 'start' : 'end'}">Hồi hải mã</text>
+                <text x="${isLeft ? 40 : 180}" y="113" fill="#94a3b8" font-size="8.5" font-weight="bold" text-anchor="${isLeft ? 'end' : 'start'}">Sừng thái dương</text>
+            </svg>`;
+        }
+
+        // Cập nhật giao diện hình ảnh mô phỏng
+        function updateVisuals() {
+            let rightGrade = parseInt(document.getElementById('mta-right').value);
+            let leftGrade = parseInt(document.getElementById('mta-left').value);
+
+            document.getElementById('val-right').innerText = "MTA Độ " + rightGrade;
+            document.getElementById('val-left').innerText = "MTA Độ " + leftGrade;
+
+            // Vẽ lại SVG tương ứng
+            document.getElementById('svg-box-right').innerHTML = generateMtaSvg(rightGrade, false);
+            document.getElementById('svg-box-left').innerHTML = generateMtaSvg(leftGrade, true);
+
+            evaluateMTA();
+        }
+
+        // Thuật toán lượng giá chẩn đoán lâm sàng
+        function evaluateMTA() {
+            let ageGroup = document.getElementById('age-select').value;
+            let mtaR = parseInt(document.getElementById('mta-right').value);
+            let mtaL = parseInt(document.getElementById('mta-left').value);
+
+            let maxMta = Math.max(mtaR, mtaL);
+            let diff = Math.abs(mtaR - mtaL);
+
+            let isAbnormal = false;
+            let resultHtml = "";
+
+            if (ageGroup === "under75") {
+                // < 75 tuổi: Bất thường khi MTA >= 1.5 (có tối thiểu một bên đạt độ 2)
+                if (maxMta >= 2) {
+                    isAbnormal = true;
+                    resultHtml = `<b>KẾT LUẬN: HÌNH ẢNH MTA BẤT THƯỜNG BỆNH LÝ</b><br>
+                    Ở người dưới 75 tuổi, điểm cắt bệnh lý MTA là &ge; 1.5 (có tối thiểu một bên đạt từ độ 2 trở lên). <br>
+                    - Bên Phải (Right): Độ ${mtaR} ${mtaR >= 2 ? '(Bất thường)' : '(Trong giới hạn sinh lý)'}<br>
+                    - Bên Trái (Left): Độ ${mtaL} ${mtaL >= 2 ? '(Bất thường)' : '(Trong giới hạn sinh lý)'}<br><br>
+                    💡 <b>Định hướng lâm sàng:</b> Gợi ý tiến trình thoái hóa thùy thái dương trong sớm (Bệnh Alzheimer). Khuyến nghị BS lâm sàng chấm phối hợp thêm **Thang điểm Koedam (Teo thùy đỉnh sau)** để tăng độ nhạy tầm soát.`;
+                } else {
+                    resultHtml = "<b>KẾT LUẬN: HÌNH ẢNH TRONG GIỚI HẠN BÌNH THƯỜNG SINH LÝ</b><br>Kích thước nhu mô hồi hải mã phát triển tốt và đồng đều hai bên đại não, chưa có dấu hiệu teo thùy thái dương trong sớm.";
+                }
+            } else {
+                // >= 75 tuổi: Bất thường khi MTA >= 2.0 (cả hai bên đều đạt tối thiểu độ 2)
+                if (mtaR >= 2 && mtaL >= 2) {
+                    isAbnormal = true;
+                    resultHtml = `<b>KẾT LUẬN: HÌNH ẢNH MTA BẤT THƯỜNG BỆNH LÝ</b><br>
+                    Bệnh nhân lớn tuổi (&ge; 75 tuổi), điểm cắt bệnh lý MTA là &ge; 2.0 (yêu cầu teo đối xứng cả hai bên từ độ 2 trở lên). <br>
+                    - Bên Phải (Right): Độ ${mtaR} (Bất thường)<br>
+                    - Bên Trái (Left): Độ ${mtaL} (Bất thường)<br><br>
+                    💡 <b>Định hướng lâm sàng:</b> Tổn thương teo hồi hải mã thực thể. Khuyến nghị BS lâm sàng rà soát thêm chuỗi xung **FLAIR** để chấm thang điểm **Fazekas (bệnh lý chất trắng mạch máu nhỏ)** nhằm đánh giá thể Sa sút trí tuệ hỗn hợp (Alzheimer + Mạch máu nhỏ).`;
+                } else {
+                    resultHtml = "<b>KẾT LUẬN: HÌNH ẢNH TRONG GIỚI HẠN BÌNH THƯỜNG LÃO HÓA TỰ NHIÊN</b><br>Mức độ teo nằm trong giới hạn cho phép của tiến trình lão hóa lành tính theo tuổi tác (MTA &le; 2 một bên ở người lớn tuổi không được xem là bệnh lý).";
+                }
+            }
+
+            // Cảnh báo bất đối xứng nghiêm trọng giữa hai bán cầu
+            if (diff >= 2) {
+                resultHtml += `<br><br><span style="color: var(--rose-500); font-weight: bold;">⚠️ CẢNH BÁO LÂM SÀNG: BẤT ĐỐI XỨNG PHẢI/TRÁI NGHIÊM TRỌNG (&ge; 2 ĐỘ)</span><br>
+                Sự chênh lệch thể tích hồi hải mã rõ rệt giữa hai bên (Phải: Độ ${mtaR} vs Trái: Độ ${mtaL}) hướng mạnh mẽ tới một chẩn đoán khác ngoài bệnh Alzheimer. <br>
+                Nghi ngờ hàng đầu: <b>Sa sút trí tuệ thùy Trán - Thái dương (FTLD)</b>. Cần rà soát kỹ đặc điểm teo bất đối xứng thùy thái dương và thùy trán, đặc biệt là dấu hiệu "lưỡi dao" (knife-blade atrophy).`;
+            }
+
+            // Cập nhật trạng thái Badge
+            let badge = document.getElementById('dx-badge');
+            if (isAbnormal || diff >= 2) {
+                badge.innerText = "Bất Thường / Theo Dõi";
+                badge.style.backgroundColor = "rgba(244, 63, 94, 0.15)";
+                badge.style.color = "var(--rose-500)";
+            } else {
+                badge.innerText = "Sinh Lý Bình Thường";
+                badge.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
+                badge.style.color = "var(--emerald-500)";
+            }
+
+            document.getElementById('dx-text').innerHTML = resultHtml;
+        }
+
+        // Chuyển đổi qua lại giữa các mục
+        function showSection(sectionId) {
+            // Ẩn toàn bộ các section
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.add('hidden'));
+
+            // Hiển thị section được chọn
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // Cập nhật trạng thái Active trên Menu
+            const activeMenuItem = document.querySelector(`.menu-item[onclick="showSection('${sectionId}')"]`);
+            if (activeMenuItem) {
+                document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+                activeMenuItem.classList.add('active');
+                document.getElementById('view-title').innerText = activeMenuItem.innerText.replace(/^\d+\.\s+/, "");
+            }
+        }
+
+        // Lọc menu tìm kiếm nhanh
+        function filterMenu() {
+            const filter = document.getElementById('searchInput').value.toUpperCase();
+            document.querySelectorAll('.menu-item').forEach(item => {
+                const text = item.textContent || item.innerText;
+                if (text.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        // Khởi chạy ứng dụng ban đầu
+        updateVisuals();
+    </script>
+</body>
+</html>
