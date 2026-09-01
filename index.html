@@ -340,6 +340,12 @@
                 <canvas id="cropCanvas"></canvas>
             </div>
 
+            <!-- Khung Nhập Chú Thích Cho Hình Crop -->
+            <div style="margin-top: 10px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <label style="font-size: 12px; font-weight: bold; color: #0284c7; display: block; margin-bottom: 4px;">📝 Chú thích cho hình ảnh này (Lưu vào file PDF):</label>
+                <input type="text" id="cropCaptionInput" placeholder="Nhập chú thích (Ví dụ: Khối u gan hạ phân thùy VI kích thước 15 mm)..." style="width: 100%; font-size: 12px; padding: 6px;">
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
                 <span style="font-size: 11px; color: #64748b;">* Kéo chuột trên hình để Cắt (Crop) hoặc Vẽ chú thích trước khi chuyển sang AI.</span>
                 <div style="display: flex; gap: 8px;">
@@ -927,6 +933,7 @@
                         rawCapturedImage = new Image();
                         rawCapturedImage.onload = () => {
                             setupCropCanvas(rawCapturedImage);
+                            document.getElementById('cropCaptionInput').value = '';
                             toggleModal('cropModal', true);
                         };
                         rawCapturedImage.src = tempCanvas.toDataURL('image/png');
@@ -1075,7 +1082,16 @@
             redrawCanvas();
             const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
             clearSelectedMedia();
-            currentBase64Image = { mime_type: 'image/jpeg', data: dataUrl.split(',')[1], fullUrl: dataUrl };
+
+            // Lấy chú thích người dùng đã nhập
+            const customCaption = document.getElementById('cropCaptionInput').value.trim() || 'Ảnh Crop từ PACS/Desktop';
+
+            currentBase64Image = { 
+                mime_type: 'image/jpeg', 
+                data: dataUrl.split(',')[1], 
+                fullUrl: dataUrl,
+                caption: customCaption 
+            };
 
             const img = document.getElementById('imagePreview');
             img.src = dataUrl; img.style.display = 'block';
@@ -1147,21 +1163,29 @@
             if (!apiKey) { toggleModal('apiModal', true); return; }
 
             let userContentHtml = text;
-            if (currentBase64Image) userContentHtml += `<br><img src="${currentBase64Image.fullUrl}">`;
+            if (currentBase64Image) {
+                userContentHtml += `<br><img src="${currentBase64Image.fullUrl}">`;
+                if (currentBase64Image.caption) {
+                    userContentHtml += `<div style="font-size: 11px; font-style: italic; color: #0284c7; margin-top: 2px;">📌 ${currentBase64Image.caption}</div>`;
+                }
+            }
             if (currentBase64Audio) userContentHtml += `<br><audio controls src="${currentBase64Audio.fullUrl}"></audio>`;
             
             const userMsgId = addMessageToChat('user', userContentHtml, true);
 
             const parts = [];
             if (text) parts.push({ text: text });
-            if (currentBase64Image) parts.push({ inline_data: { mime_type: currentBase64Image.mime_type, data: currentBase64Image.data } });
+            if (currentBase64Image) {
+                parts.push({ inline_data: { mime_type: currentBase64Image.mime_type, data: currentBase64Image.data } });
+                if (currentBase64Image.caption) parts.push({ text: `[Chú thích hình ảnh đi kèm: ${currentBase64Image.caption}]` });
+            }
             if (currentBase64Audio) parts.push({ inline_data: { mime_type: currentBase64Audio.mime_type, data: currentBase64Audio.data } });
 
             const userIndex = geminiMessages.length;
             geminiMessages.push({ role: 'user', parts: parts });
             document.getElementById(userMsgId).setAttribute('data-index', userIndex);
 
-            const imageForHistory = currentBase64Image ? currentBase64Image.fullUrl : null;
+            const imageForHistory = currentBase64Image ? { url: currentBase64Image.fullUrl, customCaption: currentBase64Image.caption } : null;
             input.value = ''; clearSelectedMedia();
 
             const loadingId = addMessageToChat('ai', '🔍 AI đang phân tích dữ liệu...');
@@ -1175,14 +1199,19 @@
                 geminiMessages.push({ role: 'model', parts: [{ text: response }] });
                 document.getElementById(aiMsgId).setAttribute('data-index', aiIndex);
 
-                if (imageForHistory) uploadedImagesHistory.push({ imgUrl: imageForHistory, caption: response });
+                if (imageForHistory) {
+                    uploadedImagesHistory.push({ 
+                        imgUrl: imageForHistory.url, 
+                        caption: imageForHistory.customCaption || response 
+                    });
+                }
             } catch (err) {
                 document.getElementById(loadingId).remove();
                 addMessageToChat('ai', `❌ Lỗi phân tích: ${err.message}`);
             }
         }
 
-        /* TỔNG HỢP BÁO CÁO: ÉP BẮT BUỘC NGÔN NGỮ THUẦN TIẾNG VIỆT 100% */
+        /* TỔNG HỢP BÁO CÁO: ÉP BẮT BUỘC NGÔN NGỮ THUẦN TIẾNG VIỆT 100% VÀ ĐƠN VỊ TÍNH CHIỀU DÀI LÀ MM */
         async function generateReport() {
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) { toggleModal('apiModal', true); return; }
@@ -1205,11 +1234,14 @@ ${templateText}
 
 ${updatedContextText}
 
-QUY TẮC BẮT BUỘC VỀ NGÔN NGỮ VÀ ĐỊNH DẠNG:
+QUY TẮC BẮT BUỘC VỀ NGÔN NGỮ, ĐƠN VỊ VÀ ĐỊNH DẠNG:
 1. SỬ DỤNG HOÀN TOÀN NGÔN NGỮ TIẾNG VIỆT 100%. Tuyệt đối KHÔNG sử dụng các từ tiếng Anh (như: Scan, Normal, MRI, CT, Lesion, Mass, Status...) hay chữ Hán. Dịch toàn bộ các thuật ngữ sang Tiếng Việt chuẩn y khoa (Ví dụ: MRI -> Cộng hưởng từ, CT -> Cắt lớp vi tính, Scan -> Khảo sát/Chụp, Normal -> Bình thường, Mass -> Khối bất thường...).
-2. Bắt đầu ngay vào văn bản báo cáo (KHÔNG lời chào, KHÔNG câu dẫn mở đầu).
-3. KHÔNG sử dụng ký tự ** (markdown bold).
-4. Phần KẾT LUẬN phải đánh số 1, 2, 3 rõ ràng.`;
+2. QUY ĐỊNH ĐƠN VỊ ĐO LƯỜNG:
+   - Phần đo số lượng ghi bằng chữ số (Ví dụ: 1, 2, 3...).
+   - ĐƠN VỊ TÍNH CHIỀU DÀI / KÍCH THƯỚC: BẮT BUỘC DÙNG ĐƠN VỊ "mm" (mili-mét). Nếu dữ liệu đầu vào ghi là cm hay m, tự động quy đổi chính xác sang mm (Ví dụ: 1.5 cm -> 15 mm, 2 cm -> 20 mm).
+3. Bắt đầu ngay vào văn bản báo cáo (KHÔNG lời chào, KHÔNG câu dẫn mở đầu).
+4. KHÔNG sử dụng ký tự ** (markdown bold).
+5. Phần KẾT LUẬN phải đánh số 1, 2, 3 rõ ràng.`;
 
             try {
                 let reportResult = cleanText(await callGeminiApi(apiKey, [...geminiMessages, { role: 'user', parts: [{ text: promptText }] }]));
@@ -1219,7 +1251,7 @@ QUY TẮC BẮT BUỘC VỀ NGÔN NGỮ VÀ ĐỊNH DẠNG:
 
         async function callGeminiApi(apiKey, contentsPayload) {
             const modelsToTry = ['gemini-3.6-flash', 'gemini-3.1-pro', 'gemini-3.5-flash-lite'];
-            const systemInstruction = { parts: [{ text: "Bạn là Trợ lý AI Chẩn đoán Hình ảnh. Sử dụng 100% tiếng Việt chuẩn Y khoa trong toàn bộ báo cáo kết quả. Tuyệt đối KHÔNG dùng tiếng Anh, KHÔNG dùng chữ Hán, KHÔNG dùng ký tự **." }] };
+            const systemInstruction = { parts: [{ text: "Bạn là Trợ lý AI Chẩn đoán Hình ảnh. Sử dụng 100% tiếng Việt chuẩn Y khoa trong toàn bộ báo cáo kết quả. Đơn vị tính chiều dài/kích thước bắt buộc dùng mm. Tuyệt đối KHÔNG dùng tiếng Anh, KHÔNG dùng chữ Hán, KHÔNG dùng ký tự **." }] };
 
             for (const model of modelsToTry) {
                 try {
