@@ -19,6 +19,7 @@
             --text-color: #333333;
             --success-color: #28a745;
             --error-color: #dc3545;
+            --warning-color: #ffc107;
             --border-color: #e0e0e0;
             --ai-color: #6f42c1;
             --cloud-color: #0284c7;
@@ -33,7 +34,7 @@
             line-height: 1.6;
         }
 
-        .container { max-width: 950px; margin: 0 auto; }
+        .container { max-width: 980px; margin: 0 auto; }
 
         header {
             text-align: center;
@@ -102,13 +103,17 @@
         }
         .btn-cloud { background-color: var(--cloud-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-ai { background-color: var(--ai-color); color: white; border: none; padding: 12px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .btn-review { background-color: #d97706; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
 
-        /* Results */
+        /* Results & Review Box */
         #result-section { display: none; }
         .alert { padding: 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; text-align: center; font-size: 18px; }
         .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .pearls-list { background-color: #e8f4f8; border-left: 4px solid var(--primary-color); padding: 15px 15px 15px 35px; }
+
+        .review-box { background: #fffbe0; border: 1px solid #fcd34d; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .review-box h4 { margin-top: 0; color: #b45309; }
 
         /* Controls */
         .form-group { margin-bottom: 15px; }
@@ -132,7 +137,7 @@
 <div class="container">
     <header>
         <h1>ACR CASE IN POINT - RADIOLOGY QUIZ</h1>
-        <p style="margin:0; color:#6c757d; font-size: 14px;">Hệ thống Ôn tập Chẩn đoán Hình ảnh - Tích hợp AI Gemini & Cloud Database</p>
+        <p style="margin:0; color:#6c757d; font-size: 14px;">Hệ thống Ôn tập Chẩn đoán Hình ảnh - Tích hợp AI Gemini & Peer Review</p>
     </header>
 
     <!-- Navigation Tabs -->
@@ -154,10 +159,11 @@
             </div>
         </div>
 
-        <!-- 1. Clinical History -->
+        <!-- 1. Clinical History & Protocol -->
         <div class="card">
-            <h2 class="card-title">1. Bối Cảnh Lâm Sàng</h2>
+            <h2 class="card-title">1. Bối Cảnh Lâm Sàng & Kỹ Thuật Chụp</h2>
             <div id="display-history">Đang tải thông tin ca bệnh...</div>
+            <div id="display-protocol" style="margin-top:10px; font-style:italic; color:#555; background:#f9f9f9; padding:8px 12px; border-left:3px solid #0056b3;"></div>
         </div>
 
         <!-- 2. Clean Images -->
@@ -249,29 +255,40 @@
                     <div class="form-group" style="margin-bottom:0;">
                         <label style="font-size:12px;">Chọn phiên bản Gemini API:</label>
                         <select id="select-gemini-model" class="form-control">
-                            <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Câu trả lời nhanh nhất)</option>
-                            <option value="gemini-3.6-flash" selected>3.6 Flash (Trợ giúp toàn diện)</option>
-                            <option value="gemini-3.1-pro">3.1 Pro (Suy luận nâng cao)</option>
-                            <option value="gemini-3.6-flash-thinking">Tư duy mở rộng (Giải quyết vấn đề phức tạp)</option>
+                            <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Tốc độ cao)</option>
+                            <option value="gemini-3.6-flash" selected>3.6 Flash (Trợ lý Phân tích CĐHA)</option>
+                            <option value="gemini-3.1-pro">3.1 Pro (Suy luận y khoa nâng cao)</option>
                         </select>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- TẢI FILE PDF CASE STUDY -->
+        <!-- TẢI FILE PDF CASE STUDY & ĐÁNH GIÁ CHUYÊN MÔN -->
         <div class="pdf-box">
             <h3 style="margin-top:0; color:#0056b3;">📄 Tải File PDF Báo Cáo Ca Lâm Sàng</h3>
             <input type="file" id="input-pdf-file" accept="application/pdf" class="form-control" onchange="processPDF(this)">
             <div id="pdf-status" style="margin-top: 8px; font-weight: bold; font-size: 13px;"></div>
 
-            <button type="button" class="btn-ai" style="margin-top: 12px; width: 100%; justify-content: center;" onclick="generateWithAI()">
-                <span id="ai-btn-spinner" class="spinner hidden"></span>
-                <span>🤖 Dùng Gemini AI Tự Động Phân Tích & Tạo Bài ACR Case in Point</span>
-            </button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                <button type="button" class="btn-ai" style="justify-content: center;" onclick="generateWithAI()">
+                    <span id="ai-btn-spinner" class="spinner hidden"></span>
+                    <span>🤖 AI Tự Động Phân Tích & Tạo Ca</span>
+                </button>
+                <button type="button" class="btn-review" style="justify-content: center;" onclick="reviewCaseWithAI()">
+                    <span id="review-btn-spinner" class="spinner hidden"></span>
+                    <span>🔍 AI Đánh Giá & Góp Ý Peer Review</span>
+                </button>
+            </div>
         </div>
 
-        <div class="card">
+        <!-- KHUNG KẾT QUẢ PEER REVIEW CỦA AI -->
+        <div id="ai-review-result" class="review-box hidden">
+            <h4>📋 Kết Quả Đánh Giá & Góp Ý Chi Tiết Từ AI Peer-Reviewer:</h4>
+            <div id="ai-review-content" style="font-size: 14px; white-space: pre-line;"></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
             <h2 class="card-title">⚙️ Nội Dung Chi Tiết Ca Bệnh</h2>
             <form id="admin-form">
                 <div class="form-group">
@@ -282,6 +299,11 @@
                 <div class="form-group">
                     <label>Bối cảnh lâm sàng (Clinical History):</label>
                     <textarea id="input-history" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Kỹ thuật chụp / Chuỗi xung (Imaging Protocol):</label>
+                    <input type="text" id="input-protocol" class="form-control" placeholder="Ví dụ: CT bụng chậu 128 dãy có tiêm thuốc cản quang thì động mạch và tĩnh mạch đồ">
                 </div>
 
                 <!-- MULTI CLEAN IMAGES UPLOAD -->
@@ -342,6 +364,7 @@
     let currentCase = {
         title: "Case Mẫu - Nhồi Máu Thận Cấp",
         history: "Bệnh nhân nam 40 tuổi vào viện vì đau hông lưng trái đột ngột dữ dội. Tiền sử chưa ghi nhận bệnh lý tim mạch.",
+        protocol: "CT-Scanner ổ bụng có tiêm thuốc cản quang thì động mạch và tĩnh mạch đồ.",
         cleanImgs: ["https://via.placeholder.com/800x450/000000/FFFFFF?text=CT+Scan+Clean"],
         question: "Dựa vào hình ảnh CT-Scanner tầng bụng có tiêm thuốc cản quang, chẩn đoán xác định nào dưới đây là phù hợp nhất?",
         options: ["Viêm thận - bể thận cấp tính", "Nhồi máu thận cấp do tắc động mạch thận", "Hoại tử ống thận cấp", "Huyết khối tĩnh mạch thận"],
@@ -370,7 +393,6 @@
         populateAdminForm();
     };
 
-    /* XỬ LÝ XÁC THỰC MẬT KHẨU ADMIN */
     function switchTab(tab) {
         if (tab === 'admin') {
             const isAuth = sessionStorage.getItem('admin_authenticated');
@@ -383,7 +405,7 @@
                     alert("❌ Mật khẩu Admin không đúng!");
                     return;
                 } else {
-                    return; // Nhấn Hủy
+                    return;
                 }
             }
         }
@@ -525,6 +547,7 @@
         return {
             title: document.getElementById('input-title').value || "Ca lâm sàng ngày " + new Date().toLocaleDateString('vi-VN'),
             history: document.getElementById('input-history').value,
+            protocol: document.getElementById('input-protocol').value,
             cleanImgs: [...tempCleanImgs],
             question: document.getElementById('input-question').value,
             options: [
@@ -596,18 +619,19 @@
         document.getElementById('ai-btn-spinner').classList.remove('hidden');
 
         const promptText = `
-Bạn là bác sĩ Chẩn đoán hình ảnh. Hãy phân tích báo cáo ca bệnh sau và chuyển thành bài thi ACR Case in Point:
+Bạn là Chuyên gia Chẩn đoán hình ảnh cao cấp. Hãy phân tích báo cáo ca bệnh sau và soạn thành bài ACR Case in Point chuẩn y khoa:
 """
 ${inputText}
 """
-Trả về chuỗi JSON chuẩn:
+Trả về chuỗi JSON chuẩn với đầy đủ các thuộc tính:
 {
-  "title": "Tiêu đề ca bệnh ngắn gọn",
+  "title": "Tiêu đề ca bệnh ngắn gọn chuyên nghiệp",
   "history": "Bối cảnh lâm sàng tóm tắt 2-3 câu",
-  "question": "1 câu hỏi trắc nghiệm chẩn đoán hình ảnh",
+  "protocol": "Kỹ thuật chụp / Chuỗi xung hình ảnh",
+  "question": "1 câu hỏi trắc nghiệm chẩn đoán hình ảnh cốt lõi",
   "options": ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
   "correctIndex": 0,
-  "discussion": "Phân tích chi tiết hình ảnh và chẩn đoán phân biệt",
+  "discussion": "Phân tích chi tiết tổn thương trên hình ảnh, dấu hiệu đặc trưng và chẩn đoán phân biệt",
   "pearls": ["Clinical pearl 1", "Clinical pearl 2", "Clinical pearl 3"]
 }
 `;
@@ -627,13 +651,14 @@ Trả về chuỗi JSON chuẩn:
 
             if(aiJson.title) document.getElementById('input-title').value = aiJson.title;
             document.getElementById('input-history').value = aiJson.history;
+            if(aiJson.protocol) document.getElementById('input-protocol').value = aiJson.protocol;
             document.getElementById('input-question').value = aiJson.question;
             aiJson.options.forEach((opt, idx) => { document.getElementById(`opt-${idx}`).value = opt; });
             document.querySelectorAll('input[name="correct-opt"]')[aiJson.correctIndex].checked = true;
             document.getElementById('input-discussion').value = aiJson.discussion;
             document.getElementById('input-pearls').value = aiJson.pearls.join('\n');
 
-            alert(`✨ Gemini AI [${selectedModel}] đã tạo bài test thành công!`);
+            alert(`✨ Gemini AI [${selectedModel}] đã soạn xong ca bệnh chuẩn ACR!`);
         } catch (err) {
             alert("❌ Lỗi khi gọi Gemini AI: " + err.message);
         } finally {
@@ -641,8 +666,64 @@ Trả về chuỗi JSON chuẩn:
         }
     }
 
+    /* TÍNH NĂNG AI PEER REVIEW / ĐÁNH GIÁ VÀ GÓP Ý REPORT */
+    async function reviewCaseWithAI() {
+        const apiKey = localStorage.getItem('gemini_api_key') || document.getElementById('input-api-key').value;
+        const selectedModel = document.getElementById('select-gemini-model').value || 'gemini-3.6-flash';
+
+        if (!apiKey) { 
+            alert("⚠️ Vui lòng mở phần Cấu Hình và nhập Gemini API Key!"); 
+            document.getElementById('config-panel').classList.remove('hidden');
+            return; 
+        }
+
+        const formData = getFormData();
+        document.getElementById('review-btn-spinner').classList.remove('hidden');
+
+        const promptText = `
+Bạn là Chủ tịch Hội đồng Đánh giá Chuyên môn (Peer Reviewer) của ấn phẩm ACR Case in Point.
+Hãy đánh giá chi tiết bài báo cáo ca bệnh sau đây và đưa ra nhận xét chuyên môn:
+
+- Tiêu đề: ${formData.title}
+- Lâm sàng: ${formData.history}
+- Kỹ thuật chụp: ${formData.protocol}
+- Câu hỏi: ${formData.question}
+- Đáp án lựa chọn: ${formData.options.join(' | ')} (Đáp án đúng: ${formData.options[formData.correctIndex]})
+- Phân tích Discussion: ${formData.discussion}
+- Clinical Pearls: ${formData.pearls.join(' ; ')}
+
+Hãy đưa ra đánh giá theo 3 mục bằng Tiếng Việt:
+1. 🟢 **Điểm Mạnh (Strengths):** Những điểm chuẩn xác, rõ ràng.
+2. 🟡 **Góp Ý Bổ Sung (Suggestions):** Cần làm rõ thêm đặc điểm hình ảnh, kỹ thuật chụp, hoặc chẩn đoán phân biệt nào để ca bệnh chuyên nghiệp hơn?
+3. 🔴 **Lỗi Cần Sửa (Clinical Fixes):** Có sai sót về thuật ngữ y khoa hay logic chẩn đoán không?
+`;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }]
+                })
+            });
+
+            const data = await response.json();
+            const reviewText = data.candidates[0].content.parts[0].text;
+
+            document.getElementById('ai-review-content').innerHTML = reviewText;
+            document.getElementById('ai-review-result').classList.remove('hidden');
+            document.getElementById('ai-review-result').scrollIntoView({ behavior: 'smooth' });
+
+        } catch (err) {
+            alert("❌ Lỗi khi thực hiện Peer Review: " + err.message);
+        } finally {
+            document.getElementById('review-btn-spinner').classList.add('hidden');
+        }
+    }
+
     function loadQuiz() {
         document.getElementById('display-history').innerHTML = currentCase.history;
+        document.getElementById('display-protocol').innerHTML = currentCase.protocol ? `<b>Protocol:</b> ${currentCase.protocol}` : '';
         document.getElementById('display-question-text').innerText = currentCase.question;
         renderGallery(currentCase.cleanImgs, 'clean-main-img', 'clean-thumb-bar');
 
@@ -749,6 +830,7 @@ Trả về chuỗi JSON chuẩn:
     function populateAdminForm() {
         document.getElementById('input-title').value = currentCase.title || "";
         document.getElementById('input-history').value = currentCase.history;
+        document.getElementById('input-protocol').value = currentCase.protocol || "";
         document.getElementById('input-question').value = currentCase.question;
         currentCase.options.forEach((opt, idx) => { document.getElementById(`opt-${idx}`).value = opt; });
         document.querySelectorAll('input[name="correct-opt"]')[currentCase.correctIndex].checked = true;
