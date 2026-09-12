@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACR Case in Point - Cloud & AI Radiology Quiz</title>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Firebase SDK (v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --primary-hover: #004085;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --border-color: #e0e0e0;
+            --ai-color: #6f42c1;
+            --cloud-color: #0284c7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 950px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        header h1 { color: var(--primary-color); margin: 0 0 5px 0; font-size: 24px; }
+
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn.active { background-color: var(--primary-color); color: white; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid var(--border-color);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* PACS Viewer */
+        .viewer-container { background-color: #000; border-radius: 8px; padding: 15px; text-align: center; }
+        .main-img-box { min-height: 300px; max-height: 520px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+        .main-img-box img { max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 4px; }
+        .thumb-bar { display: flex; gap: 10px; justify-content: center; overflow-x: auto; padding: 5px 0; }
+        .thumb-item { width: 70px; height: 70px; object-fit: cover; border-radius: 4px; cursor: pointer; opacity: 0.5; border: 2px solid transparent; background: #222; }
+        .thumb-item.active { opacity: 1; border-color: var(--primary-color); transform: scale(1.05); }
+        .img-caption { font-size: 13px; color: #888; text-align: center; margin-top: 8px; font-style: italic; }
+
+        /* Quiz Options */
+        .options-list { list-style: none; padding: 0; }
+        .option-item { margin-bottom: 10px; }
+        .option-label {
+            display: flex; align-items: center; padding: 12px 15px; background-color: #f8f9fa;
+            border: 2px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: all 0.2s;
+        }
+        .option-label:hover { border-color: var(--primary-color); background-color: #f0f7ff; }
+        .option-label input { margin-right: 12px; width: 18px; height: 18px; }
+
+        .btn-submit {
+            display: block; width: 100%; padding: 12px; background-color: var(--primary-color);
+            color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px;
+        }
+        .btn-cloud { background-color: var(--cloud-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-ai { background-color: var(--ai-color); color: white; border: none; padding: 12px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+
+        /* Results */
+        #result-section { display: none; }
+        .alert { padding: 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; text-align: center; font-size: 18px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .pearls-list { background-color: #e8f4f8; border-left: 4px solid var(--primary-color); padding: 15px 15px 15px 35px; }
+
+        /* Controls */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+
+        .admin-img-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .admin-img-card { position: relative; width: 90px; height: 90px; border-radius: 4px; overflow: hidden; border: 1px solid #ccc; background: #000; }
+        .admin-img-card img { width: 100%; height: 100%; object-fit: cover; }
+        .admin-img-card .btn-remove { position: absolute; top: 2px; right: 2px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; }
+
+        .pdf-box { background: #eef2f7; border: 2px dashed #0056b3; padding: 18px; border-radius: 8px; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #fff; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>ACR CASE IN POINT - RADIOLOGY QUIZ</h1>
+        <p style="margin:0; color:#6c757d; font-size: 14px;">Hệ thống Ôn tập Chẩn đoán Hình ảnh - Tích hợp AI Gemini & Cloud Database</p>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('quiz')">📝 Bài Test Hàng Tuần</button>
+        <button class="tab-btn" onclick="switchTab('admin')">🔒 ⚙️ Quản Lý Ca Bệnh & AI</button>
+    </div>
+
+    <!-- ================= VIEW 1: QUIZ VIEW ================= -->
+    <div id="view-quiz">
+        <!-- Selector Chọn Case từ Cloud -->
+        <div class="card" style="background: #e0f2fe; border-color: #bae6fd;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                <label style="font-weight: bold; color: var(--cloud-color); white-space: nowrap;">☁️ Chọn Ca Bệnh Từ Cloud:</label>
+                <select id="select-cloud-case" class="form-control" onchange="loadSelectedCloudCase(this.value)">
+                    <option value="">-- Đang tải danh sách ca bệnh... --</option>
+                </select>
+                <button type="button" class="btn-cloud" onclick="fetchCloudCases()" style="white-space: nowrap;">🔄 Tải lại</button>
+            </div>
+        </div>
+
+        <!-- 1. Clinical History -->
+        <div class="card">
+            <h2 class="card-title">1. Bối Cảnh Lâm Sàng</h2>
+            <div id="display-history">Đang tải thông tin ca bệnh...</div>
+        </div>
+
+        <!-- 2. Clean Images -->
+        <div class="card">
+            <h2 class="card-title">2. Hình Ảnh Chẩn Đoán (Ban đầu)</h2>
+            <div class="viewer-container">
+                <div class="main-img-box"><img id="clean-main-img" src="" alt="Main Clean Image"></div>
+                <div class="thumb-bar" id="clean-thumb-bar"></div>
+                <div class="img-caption">Bấm vào từng hình nhỏ để chuyển đổi lát cắt (không có mũi tên)</div>
+            </div>
+        </div>
+
+        <!-- 3. Question Form -->
+        <div class="card" id="question-card">
+            <h2 class="card-title">3. Câu Hỏi Chẩn Đoán</h2>
+            <p id="display-question-text" style="font-weight: 600;"></p>
+            <form id="quiz-form">
+                <ul class="options-list" id="display-options"></ul>
+                <button type="submit" class="btn-submit">Nộp Đáp Án & Xem Lời Giải Chi Tiết</button>
+            </form>
+        </div>
+
+        <!-- 4. Result Section -->
+        <div id="result-section">
+            <div id="result-alert" class="alert"></div>
+
+            <div class="card">
+                <h2 class="card-title">4. Hình Ảnh Chú Thích Tổn Thương (Đáp án)</h2>
+                <div class="viewer-container">
+                    <div class="main-img-box"><img id="annotated-main-img" src="" alt="Main Annotated Image"></div>
+                    <div class="thumb-bar" id="annotated-thumb-bar"></div>
+                    <div class="img-caption" style="color: #4caf50;">Mũi tên/khoanh vùng chỉ rõ vị trí tổn thương cốt lõi</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">5. Phân Tích & Chẩn Đoán Phân Biệt</h2>
+                <div id="display-discussion"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">6. Clinical Pearls (Bài Học Cốt Lõi)</h2>
+                <ul class="pearls-list" id="display-pearls"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= VIEW 2: ADMIN VIEW ================= -->
+    <div id="view-admin" class="hidden">
+        
+        <!-- THÔNG TIN PHIÊN ĐĂNG NHẬP ADMIN & ĐỔI MẬT KHẨU -->
+        <div class="card" style="background: #f8fafc; border-color: #cbd5e1; padding: 12px 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 13px; color: #1e293b; font-weight: 600;">🔑 Đang trong phiên Quản trị viên (Admin)</span>
+                <div>
+                    <button type="button" style="background: none; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; color: #0284c7; margin-right: 5px;" onclick="changeAdminPassword()">🔑 Đổi Mật Khẩu Admin</button>
+                    <button type="button" style="background: none; border: 1px solid #fca5a5; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; color: #dc2626;" onclick="logoutAdmin()">🚪 Đăng Xuất</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DÒNG TRẠNG THÁI CẤU HÌNH -->
+        <div id="config-status-bar" class="card hidden" style="background: #f8fafc; border-color: #cbd5e1; padding: 12px 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span id="config-status-text" style="font-size: 13px; color: #475569; font-weight: 600;">🔒 Đã bảo mật Gemini API Key & Firebase Cloud</span>
+                <button type="button" style="background: none; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; color: #0284c7;" onclick="toggleConfigPanel()">✏️ Chỉnh sửa API / Cloud</button>
+            </div>
+        </div>
+
+        <!-- KHUNG CẤU HÌNH HỆ THỐNG -->
+        <div id="config-panel">
+            <!-- Cấu hình Cloud Firebase Database -->
+            <div class="card" style="background: #f0f9ff; border-color: #bae6fd;">
+                <h2 class="card-title" style="color: var(--cloud-color);">☁️ Cấu hình Firebase Cloud Database</h2>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;">Firebase Realtime Database URL:</label>
+                    <input type="text" id="input-firebase-url" class="form-control" placeholder="https://your-app-default-rtdb.firebaseio.com/" onchange="saveFirebaseUrl(this.value)">
+                </div>
+            </div>
+
+            <!-- Cấu hình Gemini AI API -->
+            <div class="card" style="background: #f3e8ff; border-color: #d8b4fe;">
+                <h2 class="card-title" style="color: var(--ai-color);">🔑 Cấu hình Gemini AI API</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:12px;">Gemini API Key:</label>
+                        <input type="password" id="input-api-key" class="form-control" placeholder="AIzaSy..." onchange="saveApiKey(this.value)">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:12px;">Chọn phiên bản Gemini API:</label>
+                        <select id="select-gemini-model" class="form-control">
+                            <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Câu trả lời nhanh nhất)</option>
+                            <option value="gemini-3.6-flash" selected>3.6 Flash (Trợ giúp toàn diện)</option>
+                            <option value="gemini-3.1-pro">3.1 Pro (Suy luận nâng cao)</option>
+                            <option value="gemini-3.6-flash-thinking">Tư duy mở rộng (Giải quyết vấn đề phức tạp)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TẢI FILE PDF CASE STUDY -->
+        <div class="pdf-box">
+            <h3 style="margin-top:0; color:#0056b3;">📄 Tải File PDF Báo Cáo Ca Lâm Sàng</h3>
+            <input type="file" id="input-pdf-file" accept="application/pdf" class="form-control" onchange="processPDF(this)">
+            <div id="pdf-status" style="margin-top: 8px; font-weight: bold; font-size: 13px;"></div>
+
+            <button type="button" class="btn-ai" style="margin-top: 12px; width: 100%; justify-content: center;" onclick="generateWithAI()">
+                <span id="ai-btn-spinner" class="spinner hidden"></span>
+                <span>🤖 Dùng Gemini AI Tự Động Phân Tích & Tạo Bài ACR Case in Point</span>
+            </button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">⚙️ Nội Dung Chi Tiết Ca Bệnh</h2>
+            <form id="admin-form">
+                <div class="form-group">
+                    <label>Tên / Tiêu đề ca bệnh (Hiển thị ở danh sách Cloud):</label>
+                    <input type="text" id="input-title" class="form-control" placeholder="Ví dụ: Case 01 - Nhồi máu thận cấp & Bóc tách ĐM chậu">
+                </div>
+
+                <div class="form-group">
+                    <label>Bối cảnh lâm sàng (Clinical History):</label>
+                    <textarea id="input-history" class="form-control" rows="3"></textarea>
+                </div>
+
+                <!-- MULTI CLEAN IMAGES UPLOAD -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px dashed #ccc; margin-bottom: 15px;">
+                    <label style="color: var(--primary-color);">📸 1. HÌNH ÁNH TRƯỚC ĐÁP ÁN (Sạch, không mũi tên):</label>
+                    <input type="file" id="input-clean-files" multiple accept="image/*" class="form-control" style="margin-top:8px;" onchange="handleFileUpload(this, 'clean')">
+                    <div class="admin-img-grid" id="admin-clean-grid"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Câu hỏi trắc nghiệm:</label>
+                    <input type="text" id="input-question" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>4 Lựa chọn (Tích chọn trước đáp án ĐÚNG):</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;"><input type="radio" name="correct-opt" value="0" checked><input type="text" id="opt-0" class="form-control" placeholder="Đáp án A"></div>
+                        <div style="display: flex; align-items: center; gap: 10px;"><input type="radio" name="correct-opt" value="1"><input type="text" id="opt-1" class="form-control" placeholder="Đáp án B"></div>
+                        <div style="display: flex; align-items: center; gap: 10px;"><input type="radio" name="correct-opt" value="2"><input type="text" id="opt-2" class="form-control" placeholder="Đáp án C"></div>
+                        <div style="display: flex; align-items: center; gap: 10px;"><input type="radio" name="correct-opt" value="3"><input type="text" id="opt-3" class="form-control" placeholder="Đáp án D"></div>
+                    </div>
+                </div>
+
+                <!-- MULTI ANNOTATED IMAGES UPLOAD -->
+                <div style="background: #eef7ee; padding: 15px; border-radius: 6px; border: 1px dashed #28a745; margin-bottom: 15px;">
+                    <label style="color: var(--success-color);">🎯 2. HÌNH ÁNH SAU ĐÁP ÁN (Đã có mũi tên/khoanh vùng):</label>
+                    <input type="file" id="input-annotated-files" multiple accept="image/*" class="form-control" style="margin-top:8px;" onchange="handleFileUpload(this, 'annotated')">
+                    <div class="admin-img-grid" id="admin-annotated-grid"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Phân tích & Chẩn đoán chi tiết (Discussion):</label>
+                    <textarea id="input-discussion" class="form-control" rows="4"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>3 Clinical Pearls (Mỗi dòng 1 ý):</label>
+                    <textarea id="input-pearls" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <button type="button" class="btn-submit" style="background-color: var(--success-color); margin-top:0;" onclick="saveDataLocal()">💾 Lưu Máy Cục Bộ</button>
+                    <button type="button" class="btn-submit" style="background-color: var(--cloud-color); margin-top:0;" onclick="saveDataCloud()">☁️ Đẩy Lên Máy Chủ Cloud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    let extractedPdfText = ""; 
+    let firebaseDb = null;
+    let cloudCasesCache = {};
+
+    let currentCase = {
+        title: "Case Mẫu - Nhồi Máu Thận Cấp",
+        history: "Bệnh nhân nam 40 tuổi vào viện vì đau hông lưng trái đột ngột dữ dội. Tiền sử chưa ghi nhận bệnh lý tim mạch.",
+        cleanImgs: ["https://via.placeholder.com/800x450/000000/FFFFFF?text=CT+Scan+Clean"],
+        question: "Dựa vào hình ảnh CT-Scanner tầng bụng có tiêm thuốc cản quang, chẩn đoán xác định nào dưới đây là phù hợp nhất?",
+        options: ["Viêm thận - bể thận cấp tính", "Nhồi máu thận cấp do tắc động mạch thận", "Hoại tử ống thận cấp", "Huyết khối tĩnh mạch thận"],
+        correctIndex: 1,
+        annotatedImgs: ["https://via.placeholder.com/800x450/000000/28A745?text=CT+Scan+Annotated"],
+        discussion: "<b>Đáp án B là chính xác.</b><br>Hình ảnh CT cho thấy nhu mô thận trái giảm ngấm thuốc lan tỏa do huyết khối gây tắc hoàn toàn động mạch thận chính trái.",
+        pearls: ["Cảnh giác bẫy chẩn đoán 'Cơn đau quặn thận': Nhồi máu thận rất dễ nhầm với sỏi niệu quản.", "Dấu hiệu Spared Polar Artery: Nhu mô cực thận vẫn tươi do cấp máu từ động mạch phụ.", "Khảo sát toàn bộ hệ mạch máu ổ bụng khi phát hiện nhồi máu tạng ở người trẻ."]
+    };
+
+    let tempCleanImgs = [];
+    let tempAnnotatedImgs = [];
+
+    window.onload = function() {
+        tempCleanImgs = [...currentCase.cleanImgs];
+        tempAnnotatedImgs = [...currentCase.annotatedImgs];
+        
+        const apiKey = localStorage.getItem('gemini_api_key') || '';
+        const firebaseUrl = localStorage.getItem('firebase_db_url') || '';
+
+        document.getElementById('input-api-key').value = apiKey;
+        document.getElementById('input-firebase-url').value = firebaseUrl;
+
+        initFirebase();
+        checkAndHideConfig(apiKey, firebaseUrl);
+        loadQuiz();
+        populateAdminForm();
+    };
+
+    /* XỬ LÝ XÁC THỰC MẬT KHẨU ADMIN */
+    function switchTab(tab) {
+        if (tab === 'admin') {
+            const isAuth = sessionStorage.getItem('admin_authenticated');
+            if (!isAuth) {
+                const savedPass = localStorage.getItem('admin_password') || 'admin123';
+                const inputPass = prompt("🔑 Nhập mật khẩu Quản trị viên (Admin) để truy cập:");
+                if (inputPass === savedPass) {
+                    sessionStorage.setItem('admin_authenticated', 'true');
+                } else if (inputPass !== null) {
+                    alert("❌ Mật khẩu Admin không đúng!");
+                    return;
+                } else {
+                    return; // Nhấn Hủy
+                }
+            }
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        if (tab === 'quiz') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('view-quiz').classList.remove('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('view-quiz').classList.add('hidden');
+            document.getElementById('view-admin').classList.remove('hidden');
+        }
+    }
+
+    function changeAdminPassword() {
+        const savedPass = localStorage.getItem('admin_password') || 'admin123';
+        const currentInput = prompt("🔑 Nhập mật khẩu Admin HIỆN TẠI:");
+        if (currentInput === savedPass) {
+            const newPass = prompt("🔒 Nhập mật khẩu Admin MỚI:");
+            if (newPass && newPass.trim() !== "") {
+                localStorage.setItem('admin_password', newPass.trim());
+                alert("✅ Đã đổi mật khẩu Admin thành công!");
+            }
+        } else if (currentInput !== null) {
+            alert("❌ Mật khẩu hiện tại không chính xác!");
+        }
+    }
+
+    function logoutAdmin() {
+        sessionStorage.removeItem('admin_authenticated');
+        alert("🚪 Đã đăng xuất khỏi phiên Admin!");
+        switchTab('quiz');
+    }
+
+    function saveApiKey(key) { 
+        localStorage.setItem('gemini_api_key', key.trim()); 
+        checkAndHideConfig(key.trim(), localStorage.getItem('firebase_db_url'));
+    }
+
+    function saveFirebaseUrl(url) { 
+        localStorage.setItem('firebase_db_url', url.trim()); 
+        initFirebase();
+        checkAndHideConfig(localStorage.getItem('gemini_api_key'), url.trim());
+    }
+
+    function checkAndHideConfig(apiKey, firebaseUrl) {
+        const panel = document.getElementById('config-panel');
+        const statusBar = document.getElementById('config-status-bar');
+        const statusText = document.getElementById('config-status-text');
+
+        if (apiKey || firebaseUrl) {
+            panel.classList.add('hidden');
+            statusBar.classList.remove('hidden');
+
+            let statusList = [];
+            if (apiKey) statusList.push("Gemini API Key");
+            if (firebaseUrl) statusList.push("Firebase Cloud Database");
+
+            statusText.innerHTML = `🔒 <b>Đã ẩn cấu hình bảo mật:</b> Đã kết nối ${statusList.join(' & ')}.`;
+        } else {
+            panel.classList.remove('hidden');
+            statusBar.classList.add('hidden');
+        }
+    }
+
+    function toggleConfigPanel() {
+        document.getElementById('config-panel').classList.toggle('hidden');
+    }
+
+    function initFirebase() {
+        const dbUrl = localStorage.getItem('firebase_db_url');
+        if (dbUrl) {
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp({ databaseURL: dbUrl });
+                }
+                firebaseDb = firebase.database();
+                fetchCloudCases();
+            } catch (e) {
+                console.error("Lỗi cấu hình Firebase:", e);
+            }
+        }
+    }
+
+    function fetchCloudCases() {
+        if (!firebaseDb) return;
+        const selectBox = document.getElementById('select-cloud-case');
+        selectBox.innerHTML = "<option value=''>⌛ Đang tải dữ liệu Cloud...</option>";
+
+        firebaseDb.ref('acr_cases').once('value', (snapshot) => {
+            const data = snapshot.val();
+            selectBox.innerHTML = "<option value=''>-- Chọn ca bệnh từ Cloud --</option>";
+            if (data) {
+                cloudCasesCache = data;
+                Object.keys(data).forEach(key => {
+                    const c = data[key];
+                    selectBox.innerHTML += `<option value="${key}">${c.title || 'Ca bệnh ngày ' + key}</option>`;
+                });
+            } else {
+                selectBox.innerHTML = "<option value=''>Chưa có ca bệnh nào trên Cloud</option>";
+            }
+        });
+    }
+
+    function loadSelectedCloudCase(caseId) {
+        if (caseId && cloudCasesCache[caseId]) {
+            currentCase = cloudCasesCache[caseId];
+            loadQuiz();
+            populateAdminForm();
+        }
+    }
+
+    function saveDataCloud() {
+        if (!firebaseDb) {
+            alert("⚠️ Vui lòng mở phần Cấu Hình và nhập Firebase Database URL trước!");
+            document.getElementById('config-panel').classList.remove('hidden');
+            return;
+        }
+
+        const caseData = getFormData();
+        const caseId = 'case_' + Date.now();
+
+        firebaseDb.ref('acr_cases/' + caseId).set(caseData, (error) => {
+            if (error) {
+                alert("❌ Lỗi lưu dữ liệu lên Cloud: " + error.message);
+            } else {
+                alert("☁️ Đã lưu bài test lên Cloud thành công!");
+                currentCase = caseData;
+                fetchCloudCases();
+                loadQuiz();
+                switchTab('quiz');
+            }
+        });
+    }
+
+    function getFormData() {
+        return {
+            title: document.getElementById('input-title').value || "Ca lâm sàng ngày " + new Date().toLocaleDateString('vi-VN'),
+            history: document.getElementById('input-history').value,
+            cleanImgs: [...tempCleanImgs],
+            question: document.getElementById('input-question').value,
+            options: [
+                document.getElementById('opt-0').value,
+                document.getElementById('opt-1').value,
+                document.getElementById('opt-2').value,
+                document.getElementById('opt-3').value
+            ],
+            correctIndex: parseInt(document.querySelector('input[name="correct-opt"]:checked').value),
+            annotatedImgs: [...tempAnnotatedImgs],
+            discussion: document.getElementById('input-discussion').value.replace(/\n/g, '<br>'),
+            pearls: document.getElementById('input-pearls').value.split('\n')
+        };
+    }
+
+    function saveDataLocal() {
+        currentCase = getFormData();
+        alert("✅ Đã lưu Case Study vào bộ nhớ máy cục bộ!");
+        loadQuiz();
+        switchTab('quiz');
+    }
+
+    async function processPDF(input) {
+        const file = input.files[0];
+        if (!file || file.type !== 'application/pdf') return;
+        const statusDiv = document.getElementById('pdf-status');
+        statusDiv.innerText = "⏳ Đang đọc file PDF và trích xuất ảnh...";
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            extractedPdfText = "";
+            tempCleanImgs = []; 
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                extractedPdfText += textContent.items.map(item => item.str).join(' ') + "\n";
+
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.height = viewport.height; canvas.width = viewport.width;
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                tempCleanImgs.push(canvas.toDataURL('image/jpeg'));
+            }
+
+            document.getElementById('input-history').value = extractedPdfText;
+            renderAdminGrids();
+            statusDiv.innerText = `✅ Đã đọc xong file PDF (${pdf.numPages} trang). Nhấn Gemini AI để tạo đề!`;
+        } catch (err) {
+            statusDiv.innerText = "❌ Lỗi đọc file PDF!";
+        }
+    }
+
+    async function generateWithAI() {
+        const apiKey = localStorage.getItem('gemini_api_key') || document.getElementById('input-api-key').value;
+        const selectedModel = document.getElementById('select-gemini-model').value || 'gemini-3.6-flash';
+
+        if (!apiKey) { 
+            alert("⚠️ Vui lòng mở phần Cấu Hình và nhập Gemini API Key!"); 
+            document.getElementById('config-panel').classList.remove('hidden');
+            return; 
+        }
+
+        const inputText = document.getElementById('input-history').value || extractedPdfText;
+        if (!inputText.trim()) { alert("⚠️ Hãy tải file PDF hoặc nhập nội dung ca bệnh!"); return; }
+
+        document.getElementById('ai-btn-spinner').classList.remove('hidden');
+
+        const promptText = `
+Bạn là bác sĩ Chẩn đoán hình ảnh. Hãy phân tích báo cáo ca bệnh sau và chuyển thành bài thi ACR Case in Point:
+"""
+${inputText}
+"""
+Trả về chuỗi JSON chuẩn:
+{
+  "title": "Tiêu đề ca bệnh ngắn gọn",
+  "history": "Bối cảnh lâm sàng tóm tắt 2-3 câu",
+  "question": "1 câu hỏi trắc nghiệm chẩn đoán hình ảnh",
+  "options": ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
+  "correctIndex": 0,
+  "discussion": "Phân tích chi tiết hình ảnh và chẩn đoán phân biệt",
+  "pearls": ["Clinical pearl 1", "Clinical pearl 2", "Clinical pearl 3"]
+}
+`;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: { response_mime_type: "application/json" }
+                })
+            });
+
+            const data = await response.json();
+            const aiJson = JSON.parse(data.candidates[0].content.parts[0].text);
+
+            if(aiJson.title) document.getElementById('input-title').value = aiJson.title;
+            document.getElementById('input-history').value = aiJson.history;
+            document.getElementById('input-question').value = aiJson.question;
+            aiJson.options.forEach((opt, idx) => { document.getElementById(`opt-${idx}`).value = opt; });
+            document.querySelectorAll('input[name="correct-opt"]')[aiJson.correctIndex].checked = true;
+            document.getElementById('input-discussion').value = aiJson.discussion;
+            document.getElementById('input-pearls').value = aiJson.pearls.join('\n');
+
+            alert(`✨ Gemini AI [${selectedModel}] đã tạo bài test thành công!`);
+        } catch (err) {
+            alert("❌ Lỗi khi gọi Gemini AI: " + err.message);
+        } finally {
+            document.getElementById('ai-btn-spinner').classList.add('hidden');
+        }
+    }
+
+    function loadQuiz() {
+        document.getElementById('display-history').innerHTML = currentCase.history;
+        document.getElementById('display-question-text').innerText = currentCase.question;
+        renderGallery(currentCase.cleanImgs, 'clean-main-img', 'clean-thumb-bar');
+
+        let optionsHtml = '';
+        currentCase.options.forEach((opt, idx) => {
+            optionsHtml += `
+                <li class="option-item">
+                    <label class="option-label">
+                        <input type="radio" name="user-answer" value="${idx}" required>
+                        <span><b>${String.fromCharCode(65 + idx)}.</b> ${opt}</span>
+                    </label>
+                </li>
+            `;
+        });
+        document.getElementById('display-options').innerHTML = optionsHtml;
+        document.getElementById('result-section').style.display = 'none';
+    }
+
+    function renderGallery(imgList, mainImgId, thumbBarId) {
+        const mainImg = document.getElementById(mainImgId);
+        const thumbBar = document.getElementById(thumbBarId);
+        if (!imgList || imgList.length === 0) {
+            mainImg.src = "https://via.placeholder.com/800x450?text=No+Image";
+            thumbBar.innerHTML = ""; return;
+        }
+        mainImg.src = imgList[0];
+        thumbBar.innerHTML = "";
+        if (imgList.length <= 1) return;
+
+        imgList.forEach((src, idx) => {
+            const imgThumb = document.createElement('img');
+            imgThumb.src = src;
+            imgThumb.className = `thumb-item ${idx === 0 ? 'active' : ''}`;
+            imgThumb.onclick = function() {
+                mainImg.src = src;
+                document.querySelectorAll(`#${thumbBarId} .thumb-item`).forEach(t => t.classList.remove('active'));
+                imgThumb.classList.add('active');
+            };
+            thumbBar.appendChild(imgThumb);
+        });
+    }
+
+    document.getElementById('quiz-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const selected = document.querySelector('input[name="user-answer"]:checked');
+        if (!selected) return;
+
+        const answerIndex = parseInt(selected.value);
+        const alertBox = document.getElementById('result-alert');
+
+        if (answerIndex === currentCase.correctIndex) {
+            alertBox.className = "alert alert-success";
+            alertBox.innerText = "🎉 CHÍNH XÁC! Bạn đã đưa ra chẩn đoán hoàn toàn đúng.";
+        } else {
+            alertBox.className = "alert alert-error";
+            alertBox.innerText = `❌ CHƯA ĐÚNG! Đáp án đúng là: ${String.fromCharCode(65 + currentCase.correctIndex)}. ${currentCase.options[currentCase.correctIndex]}`;
+        }
+
+        renderGallery(currentCase.annotatedImgs.length > 0 ? currentCase.annotatedImgs : currentCase.cleanImgs, 'annotated-main-img', 'annotated-thumb-bar');
+        document.getElementById('display-discussion').innerHTML = currentCase.discussion;
+        let pearlsHtml = '';
+        currentCase.pearls.forEach(p => { if(p.trim()) pearlsHtml += `<li>${p}</li>`; });
+        document.getElementById('display-pearls').innerHTML = pearlsHtml;
+
+        document.getElementById('result-section').style.display = 'block';
+        document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    function handleFileUpload(input, type) {
+        if (input.files && input.files.length > 0) {
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (type === 'clean') tempCleanImgs.push(e.target.result);
+                    else tempAnnotatedImgs.push(e.target.result);
+                    renderAdminGrids();
+                };
+                reader.readAsDataURL(file);
+            });
+            input.value = '';
+        }
+    }
+
+    function removeAdminImage(type, index) {
+        if (type === 'clean') tempCleanImgs.splice(index, 1);
+        else tempAnnotatedImgs.splice(index, 1);
+        renderAdminGrids();
+    }
+
+    function renderAdminGrids() {
+        const cleanGrid = document.getElementById('admin-clean-grid');
+        cleanGrid.innerHTML = '';
+        tempCleanImgs.forEach((src, idx) => {
+            cleanGrid.innerHTML += `<div class="admin-img-card"><img src="${src}"><button type="button" class="btn-remove" onclick="removeAdminImage('clean', ${idx})">✕</button></div>`;
+        });
+
+        const annotatedGrid = document.getElementById('admin-annotated-grid');
+        annotatedGrid.innerHTML = '';
+        tempAnnotatedImgs.forEach((src, idx) => {
+            annotatedGrid.innerHTML += `<div class="admin-img-card"><img src="${src}"><button type="button" class="btn-remove" onclick="removeAdminImage('annotated', ${idx})">✕</button></div>`;
+        });
+    }
+
+    function populateAdminForm() {
+        document.getElementById('input-title').value = currentCase.title || "";
+        document.getElementById('input-history').value = currentCase.history;
+        document.getElementById('input-question').value = currentCase.question;
+        currentCase.options.forEach((opt, idx) => { document.getElementById(`opt-${idx}`).value = opt; });
+        document.querySelectorAll('input[name="correct-opt"]')[currentCase.correctIndex].checked = true;
+        document.getElementById('input-discussion').value = currentCase.discussion.replace(/<br>/g, '\n');
+        document.getElementById('input-pearls').value = currentCase.pearls.join('\n');
+        renderAdminGrids();
+    }
+</script>
+
+</body>
+</html>
