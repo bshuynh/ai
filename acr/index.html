@@ -47,6 +47,24 @@
         .sidebar { width: 280px; background: white; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 12px; }
         .sidebar-title { font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #475569; display: flex; justify-content: space-between; align-items: center; }
 
+        /* Ô Ô TÌM KIẾM LIGHTWEIGHT */
+        .search-box-wrapper { margin-bottom: 8px; }
+        .search-input-sm {
+            width: 100%;
+            padding: 5px 8px;
+            font-size: 11px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            outline: none;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+        }
+        .search-input-sm:focus {
+            background-color: #ffffff;
+            border-color: #0284c7;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+        }
+
         .newsletter-view { flex: 1; background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow-y: auto; padding: 30px 40px; }
         .paper-content { max-width: 800px; margin: 0 auto; }
         .paper-header { border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
@@ -237,10 +255,12 @@
                 <span>💬 DANH SÁCH CA LÂM SÀNG</span>
                 <span style="color: #0284c7; cursor: pointer;" onclick="renderMainSidebar()">Làm mới</span>
             </div>
-            <!-- Ô tìm kiếm trang chính -->
-            <div style="margin-bottom: 8px;">
-                <input type="text" id="mainSearchInput" placeholder="🔍 Tìm tên/PID/STT..." oninput="renderMainSidebar()" style="font-size: 12px;">
+
+            <!-- Ô TÌM KIẾM NHẸ TRANG CHÍNH -->
+            <div class="search-box-wrapper">
+                <input type="text" id="mainSearchInput" class="search-input-sm" placeholder="🔍 Tìm theo Tên, PID hoặc Mã STT..." oninput="renderMainSidebar()">
             </div>
+
             <div id="mainCaseList" class="history-list"></div>
         </div>
 
@@ -324,9 +344,12 @@
                     <span>Ca Chụp Đã Lưu</span>
                     <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="openTrashModal()">🗑️ Thùng rác</button>
                 </div>
-                <div class="controls">
-                    <input type="text" id="searchPatientInput" placeholder="🔍 Tìm tên/PID/STT..." oninput="filterPatientRecords()">
+
+                <!-- Ô TÌM KIẾM NHẸ TRONG BẢNG BÁC SĨ SOẠN THẢO -->
+                <div class="search-box-wrapper" style="padding: 6px 6px 0 6px;">
+                    <input type="text" id="editorSearchInput" class="search-input-sm" placeholder="🔍 Tìm Tên, PID, STT..." oninput="renderHistoryList()">
                 </div>
+
                 <div class="history-list" id="historyList"></div>
             </div>
 
@@ -687,6 +710,16 @@
             });
         }
 
+        // HÀM BỎ DẤU TIẾNG VIỆT ĐỂ TÌM KIẾM CHÍNH XÁC
+        function removeVietnameseTones(str) {
+            if (!str) return '';
+            return str
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                .toLowerCase();
+        }
+
         function checkAdminAuthState() {
             const badge = document.getElementById('adminBadgeText');
             const logoutBtn = document.getElementById('logoutAdminBtn');
@@ -736,6 +769,7 @@
             document.getElementById('oldPinInput').value = '';
             document.getElementById('newPinInput').value = '';
             document.getElementById('confirmNewPinInput').value = '';
+            toggleModal('changePinModal', false);
             toggleModal('changePinModal', true);
         }
 
@@ -826,23 +860,25 @@
         function renderMainSidebar() {
             const allOrdered = getOrderedRecords().reverse();
             const listContainer = document.getElementById('mainCaseList');
-            const filterText = (document.getElementById('mainSearchInput')?.value || '').trim().toLowerCase();
+            const searchInput = document.getElementById('mainSearchInput');
+            const keyword = removeVietnameseTones(searchInput ? searchInput.value.trim() : '');
+
             listContainer.innerHTML = '';
 
-            const filtered = allOrdered.filter(item => {
-                const name = (item.name || '').toLowerCase();
-                const pid = (item.pid || '').toLowerCase();
-                const stt = (item.sttCode || '').toLowerCase();
-                const sttNum = String(item.sttIndex || '');
-                return name.includes(filterText) || pid.includes(filterText) || stt.includes(filterText) || sttNum === filterText;
+            const filteredRecords = allOrdered.filter(item => {
+                if (!keyword) return true;
+                const nameMatch = removeVietnameseTones(item.name).includes(keyword);
+                const pidMatch = removeVietnameseTones(item.pid).includes(keyword);
+                const sttMatch = removeVietnameseTones(item.sttCode).includes(keyword) || removeVietnameseTones(String(item.sttIndex)).includes(keyword);
+                return nameMatch || pidMatch || sttMatch;
             });
 
-            if(filtered.length === 0) {
-                listContainer.innerHTML = '<div style="font-size:12px; color:#64748b; padding:8px;">Không tìm thấy ca khớp lệnh.</div>';
+            if(filteredRecords.length === 0) {
+                listContainer.innerHTML = '<div style="font-size:12px; color:#64748b; padding:8px;">Không tìm thấy ca phù hợp.</div>';
                 return;
             }
 
-            filtered.forEach((item, idx) => {
+            filteredRecords.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
@@ -856,11 +892,10 @@
                 div.onclick = () => displayCaseOnMainView(item.id);
                 listContainer.appendChild(div);
 
-                if (idx === 0) displayCaseOnMainView(item.id);
+                if (idx === 0 && !keyword) displayCaseOnMainView(item.id);
             });
         }
 
-        /* THÊM TÍNH NĂNG ZOOM KÍNH LÚP TRỰC TIẾP TRÊN BẢN TIN */
         function displayCaseOnMainView(recordId) {
             const allRecords = getOrderedRecords();
             const item = allRecords.find(r => r.id === recordId);
@@ -893,7 +928,6 @@
                     `;
                     gallery.appendChild(card);
                     
-                    // Khởi tạo sự kiện Zoom Kính Lúp
                     initMagnifier(`targetImg_${idx}`, `zoomLens_${idx}`, `zoomContainer_${idx}`);
                 });
             } else {
@@ -901,12 +935,11 @@
             }
         }
 
-        /* HÀM KHỞI TẠO TÍNH NĂNG KÍNH LÚP ZOOM TỪNG VÙNG */
         function initMagnifier(imgID, lensID, containerID) {
             const img = document.getElementById(imgID);
             const lens = document.getElementById(lensID);
             const container = document.getElementById(containerID);
-            const zoomLevel = 2.5; // Hệ số phóng to x2.5
+            const zoomLevel = 2.5;
 
             container.addEventListener("mousemove", moveLens);
             container.addEventListener("mouseenter", () => {
@@ -942,7 +975,6 @@
             }
         }
 
-        /* LIGHTBOX PHÓNG TO TOÀN MÀN HÌNH */
         function openLightbox(url, caption) {
             document.getElementById('lightboxImg').src = url;
             document.getElementById('lightboxCaption').innerText = caption;
@@ -1055,21 +1087,28 @@
             renderMainSidebar();
         }
 
-        function renderHistoryList(filterText = '') {
+        function renderHistoryList() {
             const allOrdered = getOrderedRecords().reverse();
             const listContainer = document.getElementById('historyList');
-            const keyword = (filterText || document.getElementById('searchPatientInput')?.value || '').trim().toLowerCase();
+            const searchInput = document.getElementById('editorSearchInput');
+            const keyword = removeVietnameseTones(searchInput ? searchInput.value.trim() : '');
+
             listContainer.innerHTML = '';
 
-            const filtered = allOrdered.filter(item => {
-                const name = (item.name || '').toLowerCase();
-                const pid = (item.pid || '').toLowerCase();
-                const stt = (item.sttCode || '').toLowerCase();
-                const sttNum = String(item.sttIndex || '');
-                return name.includes(keyword) || pid.includes(keyword) || stt.includes(keyword) || sttNum === keyword;
+            const filteredRecords = allOrdered.filter(item => {
+                if (!keyword) return true;
+                const nameMatch = removeVietnameseTones(item.name).includes(keyword);
+                const pidMatch = removeVietnameseTones(item.pid).includes(keyword);
+                const sttMatch = removeVietnameseTones(item.sttCode).includes(keyword) || removeVietnameseTones(String(item.sttIndex)).includes(keyword);
+                return nameMatch || pidMatch || sttMatch;
             });
 
-            filtered.forEach(item => {
+            if (filteredRecords.length === 0) {
+                listContainer.innerHTML = '<div style="font-size:12px; color:#64748b; padding:8px;">Không có kết quả.</div>';
+                return;
+            }
+
+            filteredRecords.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
@@ -1087,8 +1126,6 @@
                 listContainer.appendChild(div);
             });
         }
-
-        function filterPatientRecords() { renderHistoryList(document.getElementById('searchPatientInput').value); }
 
         function loadPatientRecord(recordId) {
             const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
@@ -1132,7 +1169,7 @@
                     resetNewPatient();
                 }
 
-                renderHistoryList(document.getElementById('searchPatientInput')?.value || '');
+                renderHistoryList();
                 renderMainSidebar();
             }
         }
