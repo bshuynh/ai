@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản Tin Y Khoa Lâm Sàng - Chẩn Đoán Hình Ảnh</title>
+    <!-- Thư viện xuất PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Thư viện Cropper.js cắt ảnh -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #f1f5f9;
+            --panel-bg: #ffffff;
+            --primary-color: #0284c7;
+            --text-color: #0f172a;
+            --border-color: #cbd5e1;
+            --chat-user: #e0f2fe;
+            --chat-ai: #f8fafc;
+            --header-bg: #0b1329;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #f4f7f6; color: var(--text-color); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* HEADER TRANG CHÍNH */
+        header.main-header {
+            background-color: var(--header-bg); color: white; padding: 12px 24px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .main-header .logo { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .main-header .admin-badge { background: rgba(255,255,255,0.15); font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: normal; }
+        .main-header .cloud-badge { background: #059669; font-size: 12px; padding: 3px 8px; border-radius: 12px; font-weight: normal; }
+        .main-header .header-actions { display: flex; gap: 10px; }
+
+        /* NÚT BẤM CHÍNH */
+        .btn-header-new { background: #059669; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .btn-header-new:hover { background: #047857; }
+        .btn-header-pdf { background: #0284c7; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .btn-header-pdf:hover { background: #0369a1; }
+
+        /* CONTAINER TRANG CHÍNH */
+        .main-container { display: flex; flex: 1; padding: 16px; gap: 16px; overflow: hidden; }
+        
+        .sidebar { width: 280px; background: white; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 12px; }
+        .sidebar-title { font-weight: bold; font-size: 13px; margin-bottom: 12px; color: #475569; display: flex; justify-content: space-between; align-items: center; }
+
+        .newsletter-view { flex: 1; background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow-y: auto; padding: 30px 40px; }
+        .paper-content { max-width: 800px; margin: 0 auto; }
+        .paper-header { border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .paper-title { font-size: 22px; font-weight: bold; color: #0f172a; }
+        .paper-subtitle { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .case-tag { background: #0284c7; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+
+        .paper-meta-box { background: #f0f9ff; border-left: 4px solid #0284c7; padding: 12px 16px; margin-bottom: 20px; border-radius: 0 4px 4px 0; }
+        .paper-meta-box h4 { font-size: 15px; margin-bottom: 4px; color: #0369a1; }
+        .paper-meta-box p { font-size: 12px; color: #334155; }
+
+        .section-title { font-size: 13px; font-weight: bold; text-transform: uppercase; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 20px 0 10px 0; }
+        
+        .grid-two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px; line-height: 1.6; }
+
+        .image-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .img-card { background: #0f172a; border-radius: 6px; padding: 6px; text-align: center; color: white; font-size: 11px; }
+        .img-card img { width: 100%; height: 180px; object-fit: contain; border-radius: 4px; }
+        .img-card .caption { padding: 4px 0; font-style: italic; color: #cbd5e1; word-break: break-word; }
+
+        /* MODAL CHƯƠNG TRÌNH SOẠN BẢN TIN MỚI */
+        .editor-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.7); z-index: 1000; flex-direction: column;
+        }
+
+        .editor-modal-header {
+            background-color: #0f172a; color: white; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;
+        }
+        .editor-modal-title { display: flex; flex-direction: column; gap: 2px; }
+        .editor-modal-title h2 { margin: 0; font-size: 16px; }
+        .editor-modal-title .author-dedication { font-size: 11px; color: #38bdf8; font-weight: 500; font-style: italic; }
+
+        .editor-container { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; background: var(--bg-primary); }
+
+        .panel {
+            background: var(--panel-bg); border-radius: 8px; border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .history-panel { flex: 1; min-width: 230px; max-width: 250px; }
+        .template-panel { flex: 1.1; min-width: 260px; }
+        .chat-panel { flex: 1.5; min-width: 340px; }
+        .report-panel { flex: 1.5; min-width: 340px; }
+
+        .panel-header {
+            padding: 8px 12px; background: #f8fafc; border-bottom: 1px solid var(--border-color);
+            font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .controls { padding: 8px; background: #f1f5f9; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 6px; }
+        .controls-row { display: flex; gap: 6px; align-items: center; }
+        select, input[type="text"], input[type="number"], input[type="password"] { width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; font-size: 13px; }
+
+        .patient-info-form { padding: 10px; background: #f8fafc; border-bottom: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .patient-info-form input, .patient-info-form select { background: white; }
+        .patient-info-form .full-width { grid-column: span 2; }
+
+        .chat-box { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message-wrapper { display: flex; flex-direction: column; max-width: 90%; position: relative; }
+        .message-wrapper.user { align-self: flex-end; }
+        .message-wrapper.ai { align-self: flex-start; }
+
+        .message-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 11px; color: #64748b; }
+        .delete-btn { cursor: pointer; color: #ef4444; font-weight: bold; margin-left: 6px; padding: 0 4px; border-radius: 3px; }
+        .delete-btn:hover { background: #fee2e2; }
+
+        .message { 
+            padding: 8px 12px; border-radius: 6px; font-size: 13px; line-height: 1.4; white-space: pre-wrap; outline: none;
+        }
+        .message:focus { border-color: #0284c7 !important; box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2); background-color: #ffffff !important; }
+        .message.user { background-color: var(--chat-user); border: 1px solid #bae6fd; }
+        .message.ai { background-color: var(--chat-ai); border: 1px solid var(--border-color); }
+        .message figure { margin-top: 6px; text-align: center; }
+        .message img { max-width: 100%; max-height: 220px; border-radius: 4px; border: 1px solid #ccc; display: block; margin: 0 auto; }
+        .message figcaption { font-size: 11px; color: #0284c7; font-style: italic; margin-top: 4px; font-weight: bold; }
+        .message audio { margin-top: 6px; width: 100%; }
+
+        .chat-input-container { padding: 8px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 6px; }
+        .chat-input-area { display: flex; gap: 8px; align-items: stretch; }
+        .media-buttons { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+        
+        textarea#userInput { 
+            flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; 
+            resize: vertical; outline: none; font-size: 13px; min-height: 70px; max-height: 180px; line-height: 1.4;
+        }
+
+        .media-preview-area { display: none; flex-direction: column; gap: 6px; background: #e2e8f0; padding: 8px; border-radius: 6px; font-size: 12px; }
+        .media-preview-top { display: flex; align-items: center; gap: 8px; }
+        .media-preview-top img { height: 45px; border-radius: 4px; border: 1px solid #94a3b8; }
+
+        .history-list { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+        .history-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; font-size: 12px; cursor: pointer; transition: background 0.2s; position: relative; }
+        .history-item:hover { background: #e2e8f0; }
+        .history-item-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 4px; color: #0284c7; }
+        .history-item-sub { color: #64748b; font-size: 11px; }
+
+        .report-editor {
+            width: 100%; height: 100%; border: none; padding: 12px;
+            font-family: 'Times New Roman', Times, serif; font-size: 15px; line-height: 1.5; outline: none; resize: none;
+        }
+
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 12px; transition: background 0.2s; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: #0369a1; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-success:hover { background: #15803d; }
+        .btn-secondary { background: #64748b; color: white; }
+        .btn-warning { background: #ea580c; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-capture { background: #8b5cf6; color: white; }
+        .btn-capture:hover { background: #7c3aed; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 450px; max-width: 95vw; }
+
+        .doctor-list-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+        .doctor-list-item:last-child { border-bottom: none; }
+
+        #pdfExportContainer { position: absolute; left: -9999px; top: -9999px; width: 750px; background: #ffffff; }
+        .pdf-image-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* STYLES CROPPER MODAL */
+        .cropper-container-wrapper { width: 100%; max-height: 380px; height: 380px; background: #000; overflow: hidden; border-radius: 6px; }
+        .cropper-container-wrapper img { max-width: 100%; }
+    </style>
+</head>
+<body>
+
+    <!-- TRANG CHÍNH: BẢN TIN Y KHOA LÂM SÀNG -->
+    <header class="main-header">
+        <div class="logo">
+            📑 BẢN TIN Y KHOA LÂM SÀNG 
+            <span class="admin-badge" id="adminBadgeText">🔒 Chưa xác thực Admin</span>
+            <span class="cloud-badge" id="cloudSyncStatus">☁️ Firebase Ready</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-header-new" onclick="handleOpenEditorWithAuth()">➕ Soạn Bản Tin Mới</button>
+            <button class="btn-header-pdf" onclick="exportMainPDF()">📄 Xuất File PDF</button>
+            <button class="btn btn-secondary" style="font-size: 11px;" onclick="openChangePinModal()">🔑 Đổi PIN Admin</button>
+            <button class="btn btn-danger" id="logoutAdminBtn" style="font-size: 11px; display: none;" onclick="logoutAdmin()">🔒 Khóa Admin</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Cột trái: Danh sách ca -->
+        <div class="sidebar">
+            <div class="sidebar-title">
+                <span>💬 DANH SÁCH CA LÂM SÀNG</span>
+                <span style="color: #0284c7; cursor: pointer;" onclick="renderMainSidebar()">Làm mới</span>
+            </div>
+            <div id="mainCaseList" class="history-list"></div>
+        </div>
+
+        <!-- Cột giữa: Bản tin chi tiết -->
+        <div class="newsletter-view">
+            <div class="paper-content">
+                <div class="paper-header">
+                    <div>
+                        <div class="paper-title">BẢN TIN Y KHOA LÂM SÀNG</div>
+                        <div class="paper-subtitle">Chuyên san Chẩn đoán Hình ảnh</div>
+                    </div>
+                    <div class="case-tag">CASE STUDY</div>
+                </div>
+
+                <div class="paper-meta-box">
+                    <h4 id="mainCaseTitle">Chưa có tiêu đề</h4>
+                    <p>Bệnh nhân: <span id="mainPatientName">Chưa cập nhật</span> | BS Đọc Ca: <span id="mainDoctorName">BS. Vũ Thế Huynh</span></p>
+                </div>
+
+                <div class="grid-two-col">
+                    <div>
+                        <div class="section-title">1. TÓM TẮT LÂM SÀNG</div>
+                        <div id="mainClinicalSummary" style="font-size: 13px; line-height: 1.6; color: #334155;">
+                            Chưa có thông tin lâm sàng.
+                        </div>
+
+                        <div class="section-title">2. CHẨN ĐOÁN HÌNH ẢNH</div>
+                        <div id="mainReportText" style="font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: #0f172a;">
+                            Chưa có báo cáo kết quả.
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="info-card">
+                            <div style="font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px;">THÔNG TIN CA</div>
+                            <p><b>Bác sĩ:</b> <span id="infoDoctor">BS. Vũ Thế Huynh</span></p>
+                            <p><b>Bệnh nhân:</b> <span id="infoPatient">Chưa cập nhật</span></p>
+                            <p><b>Mã y tế:</b> <span id="infoPid">--</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">3. HÌNH ẢNH PHIM & MINH HỌA</div>
+                <div class="image-gallery" id="mainImageGallery">
+                    <!-- Ảnh sẽ được load vào đây -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CHƯƠNG TRÌNH SOẠN BẢN TIN MỚI -->
+    <div class="editor-modal" id="editorModal">
+        <div class="editor-modal-header">
+            <div class="editor-modal-title">
+                <h2>Hệ Thống Phân Tích & Quản Lý Báo Cáo Chẩn Đoán Hình Ảnh AI</h2>
+                <div class="author-dedication">Tác giả: Bs Vũ Thế Huynh • KÍNH TẶNG TTYT QUÂN DÂN Y ĐẶC KHU CÔN ĐẢO 08/2026</div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-success" onclick="savePatientRecord()">💾 Lưu ca chụp (Cloud)</button>
+                <button class="btn btn-warning" onclick="resetNewPatient()">👤 Bệnh nhân mới</button>
+                <button class="btn btn-secondary" onclick="toggleModal('apiModal', true)">⚙️ API Key</button>
+                <button class="btn btn-danger" onclick="closeEditorModal()">✕ Đóng / Quay lại Bản Tin</button>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <!-- Cột 1: Danh sách ca đã chụp -->
+            <div class="panel history-panel">
+                <div class="panel-header">
+                    <span>Ca Chụp Đã Lưu</span>
+                    <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="openTrashModal()">🗑️ Thùng rác</button>
+                </div>
+                <div class="controls">
+                    <input type="text" id="searchPatientInput" placeholder="🔍 Tìm tên/Mã YT..." oninput="filterPatientRecords()">
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+
+            <!-- Cột 2: Mẫu chuẩn & Thông tin hành chính -->
+            <div class="panel template-panel">
+                <div class="panel-header">
+                    <span>Hành Chính & Mẫu Chuẩn</span>
+                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 11px;" onclick="toggleModal('newTemplateModal', true)">➕ Thêm mẫu</button>
+                </div>
+                <div class="patient-info-form">
+                    <input type="text" id="patientName" placeholder="Họ và tên bệnh nhân">
+                    <input type="number" id="patientYob" placeholder="Năm sinh">
+                    <input type="text" id="patientPid" placeholder="Mã y tế (PID)" class="full-width">
+                    <input type="text" id="patientDiagnosis" placeholder="Chẩn đoán lâm sàng..." class="full-width">
+                    
+                    <div class="full-width" style="display: flex; gap: 6px;">
+                        <select id="doctorSelect" style="flex: 1;"></select>
+                        <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px; white-space: nowrap;" onclick="toggleModal('doctorModal', true)">➕ Thêm BS</button>
+                    </div>
+                </div>
+                <div class="controls">
+                    <select id="modalitySelect" onchange="loadTemplate()"></select>
+                </div>
+                <textarea id="templateEditor" class="report-editor" placeholder="Mẫu chuẩn hiển thị ở đây..."></textarea>
+            </div>
+
+            <!-- Cột 3: Trò chuyện AI & Media -->
+            <div class="panel chat-panel">
+                <div class="panel-header">
+                    <span>Thảo Luận AI (Click chữ để sửa)</span>
+                    <select id="modelSelect" style="width: 140px; font-size: 11px; padding: 2px 4px;">
+                        <option value="gemini-3.6-flash" selected>3.6 Flash (Tối ưu)</option>
+                        <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Nhanh)</option>
+                        <option value="gemini-3.1-pro">3.1 Pro (Suy luận)</option>
+                    </select>
+                </div>
+                <div class="chat-box" id="chatBox">
+                    <div class="message-wrapper ai" id="msg-init">
+                        <div class="message-header"><span>AI Assistant</span></div>
+                        <div class="message ai" contenteditable="true" onblur="syncMessageContent('msg-init')">Nhập mô tả, tải ảnh phim, chụp màn hình trực tiếp hoặc ghi âm/upload audio đọc kết quả để AI hỗ trợ phân tích.</div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="media-preview-area" id="previewContainer">
+                        <div class="media-preview-top">
+                            <img id="imagePreview" src="" alt="Preview" style="display:none;">
+                            <audio id="audioPreview" controls style="display:none; height: 30px;"></audio>
+                            <span id="fileName" style="font-weight: 500; flex: 1;"></span>
+                            <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="clearSelectedMedia()">✕ Xóa</button>
+                        </div>
+                        <input type="text" id="imageCaptionInput" placeholder="🏷️ Nhập chú thích ảnh (ví dụ: Hình 1. Tổn thương thùy trên phổi)..." style="display:none; width: 100%; font-size: 11px; padding: 4px 6px;">
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                        <input type="file" id="audioInput" accept="audio/*" style="display: none;" onchange="handleAudioSelect(event)">
+                        
+                        <div class="media-buttons">
+                            <button class="btn btn-capture" title="Chụp & Cắt màn hình trực tiếp" onclick="captureScreenAndCrop()">📸 Crop Màn Hình</button>
+                            <button class="btn btn-secondary" title="Tải ảnh phim có sẵn & Crop" onclick="document.getElementById('imageInput').click()">📷 Upload Ảnh</button>
+                            <button class="btn btn-secondary" title="Tải file âm thanh" onclick="document.getElementById('audioInput').click()">🎙️ Audio</button>
+                        </div>
+                        <textarea id="userInput" rows="3" placeholder="Nhập văn bản, mô tả tổn thương chi tiết..." onkeydown="handleKeyPress(event)"></textarea>
+                        <button class="btn btn-primary" style="padding: 0 16px; font-weight: bold;" onclick="sendMessage()">Gửi</button>
+                    </div>
+                </div>
+
+                <div style="padding: 8px; border-top: 1px solid var(--border-color);">
+                    <button class="btn btn-success" style="width: 100%; font-size: 13px;" onclick="generateReport()">✨ Tổng Hợp Thành Báo Cáo</button>
+                </div>
+            </div>
+
+            <!-- Cột 4: Báo cáo & PDF -->
+            <div class="panel report-panel">
+                <div class="panel-header">
+                    <span>Báo Cáo Hoàn Chỉnh</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn btn-secondary" style="padding: 3px 6px;" onclick="copyReport()">📋 Copy</button>
+                        <button class="btn btn-primary" style="padding: 3px 6px;" onclick="exportToPDF()">📄 Xuất PDF</button>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <div class="controls-row">
+                        <select id="fontFamilySelect" onchange="changeReportStyle()">
+                            <option value="'Times New Roman', Times, serif" selected>Font: Times New Roman</option>
+                            <option value="Arial, sans-serif">Font: Arial</option>
+                            <option value="'Segoe UI', Roboto, sans-serif">Font: Segoe UI</option>
+                            <option value="Calibri, sans-serif">Font: Calibri</option>
+                        </select>
+                        <select id="fontSizeSelect" onchange="changeReportStyle()">
+                            <option value="12px">Cỡ chữ: 12px</option>
+                            <option value="13px">Cỡ chữ: 13px</option>
+                            <option value="14px">Cỡ chữ: 14px</option>
+                            <option value="15px" selected>Cỡ chữ: 15px (Chuẩn)</option>
+                            <option value="16px">Cỡ chữ: 16px</option>
+                            <option value="18px">Cỡ chữ: 18px</option>
+                        </select>
+                    </div>
+                </div>
+                <textarea id="reportEditor" class="report-editor" placeholder="Báo cáo kết quả sẽ tự động xuất ra tại đây..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BẢO MẬT XÁC THỰC ADMIN -->
+    <div class="modal" id="adminAuthModal">
+        <div class="modal-content" style="width: 380px;">
+            <h3 style="margin-bottom: 8px; color: #0284c7; display: flex; align-items: center; gap: 6px;">
+                🔒 Xác Thực Quyền Admin
+            </h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Vui lòng nhập Mã PIN Admin để mở trình soạn thảo bản tin y khoa (Mặc định: <b>1234</b>).</p>
+            
+            <input type="password" id="adminPinInput" placeholder="Nhập Mã PIN..." style="margin-bottom: 15px; font-size: 16px; text-align: center; letter-spacing: 4px;" onkeydown="if(event.key==='Enter') verifyAdminPin()">
+            
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-secondary" onclick="toggleModal('adminAuthModal', false)">Hủy</button>
+                <button class="btn btn-primary" onclick="verifyAdminPin()">Đăng nhập Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ĐỔI MÃ PIN ADMIN -->
+    <div class="modal" id="changePinModal">
+        <div class="modal-content" style="width: 380px;">
+            <h3 style="margin-bottom: 12px; color: #0f172a;">🔑 Đổi Mã PIN Admin</h3>
+            
+            <input type="password" id="oldPinInput" placeholder="Mã PIN hiện tại..." style="margin-bottom: 10px;">
+            <input type="password" id="newPinInput" placeholder="Mã PIN mới..." style="margin-bottom: 10px;">
+            <input type="password" id="confirmNewPinInput" placeholder="Xác nhận mã PIN mới..." style="margin-bottom: 15px;">
+            
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-secondary" onclick="toggleModal('changePinModal', false)">Hủy</button>
+                <button class="btn btn-primary" onclick="changeAdminPin()">Cập nhật PIN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CROPPER ẢNH -->
+    <div class="modal" id="cropperModal">
+        <div class="modal-content" style="width: 600px;">
+            <h3 style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span>✂️ Cắt & Điều Chỉnh Ảnh Phim / Màn Hình</span>
+                <button class="btn btn-secondary" style="padding: 2px 6px;" onclick="toggleModal('cropperModal', false)">✕</button>
+            </h3>
+            <div class="cropper-container-wrapper">
+                <img id="cropperTargetImage" src="" alt="Ảnh cắt">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-secondary" onclick="cropper.rotate(-90)">↺ Trái</button>
+                    <button class="btn btn-secondary" onclick="cropper.rotate(90)">↻ Phải</button>
+                    <button class="btn btn-secondary" onclick="cropper.reset()">Đặt lại</button>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-secondary" onclick="toggleModal('cropperModal', false)">Hủy</button>
+                    <button class="btn btn-primary" onclick="applyCroppedImage()">Áp dụng Crop</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Phụ -->
+    <div class="modal" id="apiModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 10px;">Cấu hình Google Gemini API Key</h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Key lấy tại <b>aistudio.google.com</b></p>
+            <input type="text" id="apiKeyInput" placeholder="Dán API Key (AIzaSy...) vào đây..." style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-secondary" onclick="toggleModal('apiModal', false)">Hủy</button>
+                <button class="btn btn-primary" onclick="saveApiKey()">Lưu Key</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="newTemplateModal">
+        <div class="modal-content" style="width: 550px;">
+            <h3 style="margin-bottom: 10px;">➕ Thêm Mẫu Báo Cáo Chuẩn Mới</h3>
+            <input type="text" id="newTemplateTitle" placeholder="Tên mẫu" style="margin-bottom: 10px;">
+            <textarea id="newTemplateContent" rows="8" placeholder="Nội dung mẫu..." style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 15px;"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-secondary" onclick="toggleModal('newTemplateModal', false)">Hủy</button>
+                <button class="btn btn-primary" onclick="saveNewTemplate()">Lưu Mẫu Mới</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="doctorModal">
+        <div class="modal-content" style="width: 480px;">
+            <h3 style="margin-bottom: 10px;">👨‍⚕️ Quản Lý Bác Sĩ Đọc Phim</h3>
+            <div style="display: flex; gap: 6px; margin-bottom: 15px;">
+                <input type="text" id="newDoctorInput" placeholder="Tên Bác sĩ (Ví dụ: BS. Vũ Thế Huynh)">
+                <button class="btn btn-primary" style="white-space: nowrap;" onclick="addNewDoctor()">Thêm</button>
+            </div>
+            
+            <div style="font-weight: bold; font-size: 12px; margin-bottom: 6px; color: #64748b;">Danh sách hiện tại:</div>
+            <div id="doctorListContainer" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; margin-bottom: 15px;"></div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="toggleModal('doctorModal', false)">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THÙNG RÁC -->
+    <div class="modal" id="trashModal">
+        <div class="modal-content" style="width: 500px;">
+            <h3 style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span>🗑️ Ca Bệnh Đã Xóa</span>
+                <button class="btn btn-secondary" style="padding: 2px 6px;" onclick="toggleModal('trashModal', false)">✕</button>
+            </h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Bạn có thể khôi phục lại ca chụp hoặc xóa vĩnh viễn khỏi bộ nhớ.</p>
+            <div class="history-list" id="trashList" style="max-height: 300px; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px;"></div>
+        </div>
+    </div>
+
+    <!-- Frame Render PDF -->
+    <div id="pdfExportContainer">
+        <div id="pdfContent" style="padding: 25px; background: #ffffff; color: #000000; width: 700px;">
+            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                <h2 style="margin: 0; text-transform: uppercase; font-size: 18px;">BÁO CÁO KẾT QUẢ CHẨN ĐOÁN HÌNH ẢNH</h2>
+            </div>
+            <div id="pdfPatientInfo" style="margin-bottom: 15px; line-height: 1.6; border-bottom: 1px dashed #ccc; padding-bottom: 10px;"></div>
+            <div id="pdfReportText" style="white-space: pre-wrap; line-height: 1.6; margin-bottom: 25px;"></div>
+            <div id="pdfFooterSignature" style="display: flex; justify-content: flex-end; margin-top: 20px; text-align: center;">
+                <div style="width: 250px;">
+                    <p id="pdfReportDate" style="font-style: italic; margin-bottom: 5px;"></p>
+                    <p style="font-weight: bold; text-transform: uppercase;">BÁC SĨ CHẨN ĐOÁN HÌNH ẢNH</p>
+                    <div style="height: 50px;"></div>
+                    <p id="pdfDoctorName" style="font-weight: bold;"></p>
+                </div>
+            </div>
+            <div id="pdfImageSection" style="margin-top: 20px; page-break-before: always;">
+                <h3 style="border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 12px; font-size: 15px;">HÌNH ẢNH PHIM & CHÚ THÍCH PHÂN TÍCH</h3>
+                <div id="pdfImageGrid" class="pdf-image-grid-2col"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TÍCH HỢP FIREBASE REALTIME DATABASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, remove, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+
+        // ⚠️ THAY THÔNG TIN CẤU HÌNH FIREBASE CỦA BẠN VÀO ĐÂY:
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Khởi tạo Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Đẩy hàm thao tác Firebase lên Global để script chính gọi
+        window.firebaseDB = db;
+        window.fbRef = ref;
+        window.fbSet = set;
+        window.fbGet = get;
+        window.fbChild = child;
+        window.fbRemove = remove;
+
+        // Tải và lắng nghe dữ liệu từ Firebase Realtime Database
+        const recordsRef = ref(db, 'patient_records');
+        onValue(recordsRef, (snapshot) => {
+            const data = snapshot.val() || {};
+            localStorage.setItem('patient_records', JSON.stringify(data));
+            if (typeof renderHistoryList === 'function') renderHistoryList();
+            if (typeof renderMainSidebar === 'function') renderMainSidebar();
+            
+            const syncStatus = document.getElementById('cloudSyncStatus');
+            if (syncStatus) {
+                syncStatus.innerText = "☁️ Firebase Synced";
+                syncStatus.style.background = "#059669";
+            }
+        }, (error) => {
+            console.error("Firebase Error: ", error);
+            const syncStatus = document.getElementById('cloudSyncStatus');
+            if (syncStatus) {
+                syncStatus.innerText = "⚠️ Cloud Offline";
+                syncStatus.style.background = "#dc2626";
+            }
+        });
+    </script>
+
+    <script>
+        const defaultTemplates = {
+            mri_brain: { title: "MRI Sọ Não Normal", text: `KỸ THUẬT: Khảo sát MRI sọ nào các chuỗi xung T1W, T2W, FLAIR, DWI/ADC trước và sau tiêm đối quang từ.\n\nMÔ TẢ TỔN THƯƠNG:\n- Nhu mô não: Không thấy ổ hạn chế khuếch tán bất thường trên DWI. Nhu mô bán cầu đại não hai bên, thân cầu và tiểu não có tín hiệu đồng nhất.\n- Cấu trúc đường giữa cân đối, hệ thống não thất bình thường.\n- Không thấy tụ máu ngoài hay dưới màng cứng.\n\nKẾT LUẬN:\nHình ảnh MRI sọ não hiện tại chưa phát hiện bất thường.` },
+            mri_spine: { title: "MRI Cột Sống Thắt Lưng Normal", text: `KỸ THUẬT: Khảo sát MRI cột sống thắt lưng các mặt cắt Sagittal T1W, T2W, STIR và Axial T2W.\n\nMÔ TẢ TỔN THƯƠNG:\n- Đường cong sinh lý cột sống thắt lưng bình thường.\n- Chiều cao các thân đốt sống bình thường. Các đĩa đệm L1/2 đến L5/S1 không thấy thoát vị.\n- Tủy sống thắt lưng và nón tủy tín hiệu bình thường.\n\nKẾT LUẬN:\nHình ảnh MRI cột sống thắt lưng hiện chưa phát hiện bất thường.` },
+            ct_abdomen: { title: "CT Bụng Chậu Normal", text: `KỸ THUẬT: Chụp cắt lớp vi tính bụng chậu có tiêm thuốc đối quang động mạch và tĩnh mạch.\n\nMÔ TẢ TỔN THƯƠNG:\n- Gan, Túi mật, Tụy, Lách, Thận hai bên: Kích thước và sự ngấm thuốc bình thường.\n- Không thấy dịch tự do hay khí tự do trong ổ bụng.\n\nKẾT LUẬN:\nHình ảnh CT bụng chậu chưa phát hiện bất thường.` },
+            ct_chest: { title: "CT Lồng Ngực Normal", text: `KỸ THUẬT: Chụp cắt lớp vi tính lồng ngực lớp cắt mỏng độ phân giải cao (HRCT).\n\nMÔ TẢ TỔN THƯƠNG:\n- Nhu mô phổi hai bên nở tốt, không thấy đông đặc hay tổn thương dạng nốt.\n- Trung thất không thấy hạch toàn bộ. Không thấy dịch khoang màng phổi.\n\nKẾT LUẬN:\nHình ảnh CT lồng ngực chưa phát hiện bất thường.` }
+        };
+
+        const defaultDoctors = ["BS. Vũ Thế Huynh", "BS. Nguyễn Văn A"];
+        const DEFAULT_PIN = "1234";
+
+        let currentTemplates = {};
+        let geminiMessages = [];
+        let currentBase64Image = null;
+        let currentBase64Audio = null;
+        let uploadedImagesHistory = [];
+        let currentPatientRecordId = null;
+        let cropper = null;
+        let isAdminAuthenticated = false;
+
+        window.onload = function() {
+            initDoctors();
+            initTemplates();
+            renderHistoryList();
+            renderMainSidebar();
+            changeReportStyle();
+            checkAdminAuthState();
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (!savedKey) toggleModal('apiModal', true);
+        };
+
+        /* XỬ LÝ BẢO MẬT ADMIN */
+        function checkAdminAuthState() {
+            const badge = document.getElementById('adminBadgeText');
+            const logoutBtn = document.getElementById('logoutAdminBtn');
+            if (isAdminAuthenticated) {
+                badge.innerText = "☑ Đã xác thực Admin";
+                badge.style.background = "#16a34a";
+                logoutBtn.style.display = "inline-block";
+            } else {
+                badge.innerText = "🔒 Chưa xác thực Admin";
+                badge.style.background = "rgba(255,255,255,0.15)";
+                logoutBtn.style.display = "none";
+            }
+        }
+
+        function handleOpenEditorWithAuth() {
+            if (isAdminAuthenticated) {
+                openEditorModal();
+            } else {
+                document.getElementById('adminPinInput').value = '';
+                toggleModal('adminAuthModal', true);
+            }
+        }
+
+        function verifyAdminPin() {
+            const pinInput = document.getElementById('adminPinInput').value.trim();
+            const savedPin = localStorage.getItem('admin_pin') || DEFAULT_PIN;
+
+            if (pinInput === savedPin) {
+                isAdminAuthenticated = true;
+                checkAdminAuthState();
+                toggleModal('adminAuthModal', false);
+                openEditorModal();
+            } else {
+                alert('❌ Mã PIN Admin không chính xác! Vui lòng thử lại.');
+                document.getElementById('adminPinInput').value = '';
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminAuthenticated = false;
+            checkAdminAuthState();
+            closeEditorModal();
+            alert('🔒 Đã khóa quyền Admin thành công.');
+        }
+
+        function openChangePinModal() {
+            document.getElementById('oldPinInput').value = '';
+            document.getElementById('newPinInput').value = '';
+            document.getElementById('confirmNewPinInput').value = '';
+            toggleModal('changePinModal', true);
+        }
+
+        function changeAdminPin() {
+            const oldPin = document.getElementById('oldPinInput').value.trim();
+            const newPin = document.getElementById('newPinInput').value.trim();
+            const confirmPin = document.getElementById('confirmNewPinInput').value.trim();
+            const currentSavedPin = localStorage.getItem('admin_pin') || DEFAULT_PIN;
+
+            if (oldPin !== currentSavedPin) {
+                alert('❌ Mã PIN hiện tại không đúng!');
+                return;
+            }
+            if (!newPin || newPin.length < 4) {
+                alert('⚠️ Mã PIN mới phải có ít nhất 4 ký tự!');
+                return;
+            }
+            if (newPin !== confirmPin) {
+                alert('❌ Xác nhận mã PIN mới không trùng khớp!');
+                return;
+            }
+
+            localStorage.setItem('admin_pin', newPin);
+            toggleModal('changePinModal', false);
+            alert('🔑 Đã cập nhật Mã PIN Admin thành công!');
+        }
+
+        function initDoctors() {
+            const savedDocs = localStorage.getItem('doctor_list');
+            const doctors = savedDocs ? JSON.parse(savedDocs) : defaultDoctors;
+            
+            const select = document.getElementById('doctorSelect');
+            select.innerHTML = '<option value="">-- Chọn Bác sĩ đọc kết quả --</option>';
+            
+            const modalList = document.getElementById('doctorListContainer');
+            modalList.innerHTML = '';
+
+            doctors.forEach((doc, idx) => {
+                const opt = document.createElement('option');
+                opt.value = doc;
+                opt.innerText = doc;
+                select.appendChild(opt);
+
+                const item = document.createElement('div');
+                item.className = 'doctor-list-item';
+                item.innerHTML = `
+                    <span>${doc}</span>
+                    <button class="btn btn-danger" style="padding: 1px 6px; font-size: 11px;" onclick="deleteDoctor(${idx})">Xóa</button>
+                `;
+                modalList.appendChild(item);
+            });
+        }
+
+        function addNewDoctor() {
+            const input = document.getElementById('newDoctorInput');
+            const docName = input.value.trim();
+            if (!docName) { alert('Vui lòng nhập tên bác sĩ!'); return; }
+
+            const savedDocs = localStorage.getItem('doctor_list');
+            const doctors = savedDocs ? JSON.parse(savedDocs) : [...defaultDoctors];
+            
+            if (!doctors.includes(docName)) {
+                doctors.push(docName);
+                localStorage.setItem('doctor_list', JSON.stringify(doctors));
+                initDoctors();
+                document.getElementById('doctorSelect').value = docName;
+                input.value = '';
+            } else { alert('Tên bác sĩ này đã tồn tại!'); }
+        }
+
+        function deleteDoctor(index) {
+            const savedDocs = localStorage.getItem('doctor_list');
+            let doctors = savedDocs ? JSON.parse(savedDocs) : [...defaultDoctors];
+            
+            if (confirm(`Bạn có chắc muốn xóa "${doctors[index]}" khỏi danh sách?`)) {
+                doctors.splice(index, 1);
+                localStorage.setItem('doctor_list', JSON.stringify(doctors));
+                initDoctors();
+            }
+        }
+
+        function openEditorModal() { document.getElementById('editorModal').style.display = 'flex'; }
+        function closeEditorModal() { 
+            document.getElementById('editorModal').style.display = 'none'; 
+            renderMainSidebar();
+        }
+
+        function renderMainSidebar() {
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const listContainer = document.getElementById('mainCaseList');
+            listContainer.innerHTML = '';
+
+            const activeKeys = Object.keys(records).filter(k => !records[k].isDeleted).reverse();
+
+            if(activeKeys.length === 0) {
+                listContainer.innerHTML = '<div style="font-size:12px; color:#64748b; padding:8px;">Chưa có ca nào được lưu.</div>';
+                return;
+            }
+
+            activeKeys.forEach((key, idx) => {
+                const item = records[key];
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="history-item-header">
+                        <span>${item.name} (${item.yob || 'N/A'})</span>
+                    </div>
+                    <div class="history-item-sub">Mã YT: <b>${item.pid}</b></div>
+                    <div class="history-item-sub">BS: ${item.doctorName || 'BS. Vũ Thế Huynh'}</div>
+                `;
+                div.onclick = () => displayCaseOnMainView(item.id);
+                listContainer.appendChild(div);
+
+                if (idx === 0) displayCaseOnMainView(item.id);
+            });
+        }
+
+        function displayCaseOnMainView(recordId) {
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const item = records[recordId];
+            if (!item || item.isDeleted) return;
+
+            document.getElementById('mainCaseTitle').innerText = item.diagnosis || 'Chưa có tiêu đề ca bệnh';
+            document.getElementById('mainPatientName').innerText = `${item.name} (${item.yob || 'N/A'})`;
+            document.getElementById('mainDoctorName').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
+            document.getElementById('mainClinicalSummary').innerText = item.diagnosis || 'Chưa cập nhật thông tin lâm sàng.';
+            document.getElementById('mainReportText').innerText = item.reportText || 'Chưa có kết quả báo cáo.';
+            
+            document.getElementById('infoDoctor').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
+            document.getElementById('infoPatient').innerText = item.name;
+            document.getElementById('infoPid').innerText = item.pid;
+
+            const gallery = document.getElementById('mainImageGallery');
+            gallery.innerHTML = '';
+            if (item.uploadedImagesHistory && item.uploadedImagesHistory.length > 0) {
+                item.uploadedImagesHistory.forEach(imgObj => {
+                    const card = document.createElement('div');
+                    card.className = 'img-card';
+                    card.innerHTML = `<img src="${imgObj.imgUrl}"><div class="caption">${imgObj.caption || 'Hình ảnh phim'}</div>`;
+                    gallery.appendChild(card);
+                });
+            } else {
+                gallery.innerHTML = '<p style="font-size:12px; color:#64748b; grid-column:span 2;">Không có hình ảnh đi kèm ca này.</p>';
+            }
+        }
+
+        function changeReportStyle() {
+            const font = document.getElementById('fontFamilySelect').value;
+            const size = document.getElementById('fontSizeSelect').value;
+            const reportEditor = document.getElementById('reportEditor');
+            reportEditor.style.fontFamily = font;
+            reportEditor.style.fontSize = size;
+        }
+
+        function initTemplates() {
+            const savedCustom = localStorage.getItem('custom_templates');
+            const customTemplates = savedCustom ? JSON.parse(savedCustom) : {};
+            currentTemplates = { ...defaultTemplates, ...customTemplates };
+            
+            const select = document.getElementById('modalitySelect');
+            select.innerHTML = '';
+            for (let key in currentTemplates) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = currentTemplates[key].title;
+                select.appendChild(opt);
+            }
+            loadTemplate();
+        }
+
+        function loadTemplate() {
+            const key = document.getElementById('modalitySelect').value;
+            if (currentTemplates[key]) {
+                document.getElementById('templateEditor').value = currentTemplates[key].text;
+            }
+        }
+
+        function saveNewTemplate() {
+            const title = document.getElementById('newTemplateTitle').value.trim();
+            const content = document.getElementById('newTemplateContent').value.trim();
+            if (!title || !content) { alert('Vui lòng điền đầy đủ tên mẫu và nội dung!'); return; }
+
+            const customKey = 'custom_' + Date.now();
+            const savedCustom = localStorage.getItem('custom_templates');
+            const customTemplates = savedCustom ? JSON.parse(savedCustom) : {};
+
+            customTemplates[customKey] = { title: title, text: content };
+            localStorage.setItem('custom_templates', JSON.stringify(customTemplates));
+
+            document.getElementById('newTemplateTitle').value = '';
+            document.getElementById('newTemplateContent').value = '';
+            toggleModal('newTemplateModal', false);
+            
+            initTemplates();
+            document.getElementById('modalitySelect').value = customKey;
+            loadTemplate();
+            alert('Đã lưu mẫu chuẩn mới!');
+        }
+
+        /* ĐỒNG BỘ LƯU DỮ LIỆU CA CHỤP LÊN FIREBASE REALTIME DATABASE */
+        function savePatientRecord() {
+            const name = document.getElementById('patientName').value.trim();
+            const pid = document.getElementById('patientPid').value.trim();
+            if (!name && !pid) { alert('Vui lòng nhập Họ tên hoặc Mã y tế để lưu ca chụp!'); return; }
+
+            const recordId = currentPatientRecordId || 'record_' + Date.now();
+            
+            const recordData = {
+                id: recordId,
+                name: name || 'Chưa tên',
+                yob: document.getElementById('patientYob').value,
+                pid: pid || 'Không có',
+                diagnosis: document.getElementById('patientDiagnosis').value,
+                doctorName: document.getElementById('doctorSelect').value || 'BS. Vũ Thế Huynh',
+                modality: document.getElementById('modalitySelect').value,
+                templateText: document.getElementById('templateEditor').value,
+                chatHtml: document.getElementById('chatBox').innerHTML,
+                geminiMessages: geminiMessages,
+                reportText: document.getElementById('reportEditor').value,
+                uploadedImagesHistory: uploadedImagesHistory,
+                selectedFont: document.getElementById('fontFamilySelect').value,
+                selectedFontSize: document.getElementById('fontSizeSelect').value,
+                isDeleted: false,
+                updatedAt: new Date().toLocaleString('vi-VN')
+            };
+
+            // 1. Lưu Local Storage
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            records[recordId] = recordData;
+            localStorage.setItem('patient_records', JSON.stringify(records));
+
+            // 2. Đẩy lên Cloud Firebase Realtime Database
+            if (window.firebaseDB && window.fbRef && window.fbSet) {
+                window.fbSet(window.fbRef(window.firebaseDB, 'patient_records/' + recordId), recordData)
+                .then(() => {
+                    alert('☁️ Đã lưu dữ liệu ca chụp lên Firebase Cloud!');
+                })
+                .catch((err) => {
+                    console.error("Lỗi khi đẩy lên Cloud: ", err);
+                    alert('⚠️ Đã lưu tại máy cục bộ (Lỗi Cloud: ' + err.message + ')');
+                });
+            } else {
+                alert('Đã lưu dữ liệu ca chụp!');
+            }
+
+            currentPatientRecordId = recordId;
+            renderHistoryList();
+            renderMainSidebar();
+        }
+
+        function renderHistoryList(filterText = '') {
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const listContainer = document.getElementById('historyList');
+            listContainer.innerHTML = '';
+
+            const keys = Object.keys(records).filter(k => !records[k].isDeleted).reverse();
+            keys.forEach(key => {
+                const item = records[key];
+                if (item.name.toLowerCase().includes(filterText.toLowerCase()) || item.pid.toLowerCase().includes(filterText.toLowerCase())) {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `
+                        <div class="history-item-header">
+                            <span>${item.name} (${item.yob || 'N/A'})</span>
+                            <span class="delete-btn" title="Xóa ca này" onclick="deletePatientRecord(event, '${item.id}')">✕</span>
+                        </div>
+                        <div class="history-item-sub">Mã YT: <b>${item.pid}</b></div>
+                        <div class="history-item-sub">BS: ${item.doctorName || 'Chưa chọn'}</div>
+                    `;
+                    div.onclick = (e) => { if (!e.target.classList.contains('delete-btn')) loadPatientRecord(item.id); };
+                    listContainer.appendChild(div);
+                }
+            });
+        }
+
+        function filterPatientRecords() { renderHistoryList(document.getElementById('searchPatientInput').value); }
+
+        function loadPatientRecord(recordId) {
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const record = records[recordId];
+            if (!record || record.isDeleted) return;
+
+            currentPatientRecordId = record.id;
+            document.getElementById('patientName').value = record.name;
+            document.getElementById('patientYob').value = record.yob;
+            document.getElementById('patientPid').value = record.pid;
+            document.getElementById('patientDiagnosis').value = record.diagnosis;
+            document.getElementById('doctorSelect').value = record.doctorName || '';
+            document.getElementById('modalitySelect').value = record.modality || '';
+            document.getElementById('templateEditor').value = record.templateText || '';
+            document.getElementById('chatBox').innerHTML = record.chatHtml || '';
+            document.getElementById('reportEditor').value = record.reportText || '';
+            
+            geminiMessages = record.geminiMessages || [];
+            uploadedImagesHistory = record.uploadedImagesHistory || [];
+        }
+
+        /* ĐỒNG BỘ XÓA LÊN FIREBASE REALTIME DATABASE */
+        function deletePatientRecord(event, recordId) {
+            if (event) event.stopPropagation();
+
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const targetRecord = records[recordId];
+            
+            if (!targetRecord) return;
+
+            const confirmDelete = confirm(`⚠️ BẠN CÓ CHẮC CHẮN MUỐN XÓA CA NÀY?\n\n- Bệnh nhân: ${targetRecord.name}\n- Mã YT: ${targetRecord.pid}\n\n(Ca bệnh sẽ được chuyển vào Thùng rác)`);
+
+            if (confirmDelete) {
+                records[recordId].isDeleted = true;
+                localStorage.setItem('patient_records', JSON.stringify(records));
+
+                // Cập nhật trạng thái xóa lên Cloud Firebase
+                if (window.firebaseDB && window.fbRef && window.fbSet) {
+                    window.fbSet(window.fbRef(window.firebaseDB, 'patient_records/' + recordId + '/isDeleted'), true);
+                }
+
+                if (currentPatientRecordId === recordId) {
+                    resetNewPatient();
+                }
+
+                renderHistoryList(document.getElementById('searchPatientInput')?.value || '');
+                renderMainSidebar();
+            }
+        }
+
+        function openTrashModal() {
+            toggleModal('trashModal', true);
+            renderTrashList();
+        }
+
+        function renderTrashList() {
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const trashContainer = document.getElementById('trashList');
+            trashContainer.innerHTML = '';
+
+            const deletedKeys = Object.keys(records).filter(k => records[k].isDeleted).reverse();
+
+            if (deletedKeys.length === 0) {
+                trashContainer.innerHTML = '<div style="font-size:12px; color:#64748b; padding:8px; text-align:center;">Thùng rác trống.</div>';
+                return;
+            }
+
+            deletedKeys.forEach(key => {
+                const item = records[key];
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.style.background = '#fff1f2';
+                div.innerHTML = `
+                    <div class="history-item-header">
+                        <span>${item.name} (${item.pid})</span>
+                        <div>
+                            <button class="btn btn-success" style="padding:1px 5px; font-size:10px;" onclick="restoreRecord('${item.id}')">↩️ Khôi phục</button>
+                            <button class="btn btn-danger" style="padding:1px 5px; font-size:10px;" onclick="permanentlyDeleteRecord('${item.id}')">✕ Xóa vĩnh viễn</button>
+                        </div>
+                    </div>
+                `;
+                trashContainer.appendChild(div);
+            });
+        }
+
+        function restoreRecord(recordId) {
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            if (records[recordId]) {
+                records[recordId].isDeleted = false;
+                localStorage.setItem('patient_records', JSON.stringify(records));
+                
+                if (window.firebaseDB && window.fbRef && window.fbSet) {
+                    window.fbSet(window.fbRef(window.firebaseDB, 'patient_records/' + recordId + '/isDeleted'), false);
+                }
+
+                renderTrashList();
+                renderHistoryList();
+                renderMainSidebar();
+            }
+        }
+
+        function permanentlyDeleteRecord(recordId) {
+            if (confirm('⚠️ Bạn có chắc muốn xóa VĨNH VIỄN ca này? Dữ liệu không thể phục hồi!')) {
+                const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+                delete records[recordId];
+                localStorage.setItem('patient_records', JSON.stringify(records));
+                
+                if (window.firebaseDB && window.fbRef && window.fbRemove) {
+                    window.fbRemove(window.fbRef(window.firebaseDB, 'patient_records/' + recordId));
+                }
+
+                renderTrashList();
+            }
+        }
+
+        function resetNewPatient() {
+            currentPatientRecordId = null;
+            document.getElementById('patientName').value = '';
+            document.getElementById('patientYob').value = '';
+            document.getElementById('patientPid').value = '';
+            document.getElementById('patientDiagnosis').value = '';
+            document.getElementById('doctorSelect').value = '';
+            geminiMessages = [];
+            uploadedImagesHistory = [];
+            clearSelectedMedia();
+            document.getElementById('chatBox').innerHTML = `
+                <div class="message-wrapper ai" id="msg-init">
+                    <div class="message-header"><span>AI Assistant</span></div>
+                    <div class="message ai" contenteditable="true" onblur="syncMessageContent('msg-init')">Đã khởi tạo ca chụp mới. Nhập thông tin hành chính và dữ liệu để bắt đầu.</div>
+                </div>`;
+            document.getElementById('reportEditor').value = '';
+        }
+
+        function toggleModal(modalId, show) {
+            document.getElementById(modalId).style.display = show ? 'flex' : 'none';
+            if(show && modalId === 'apiModal') document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key) { localStorage.setItem('gemini_api_key', key); toggleModal('apiModal', false); alert('Đã lưu API Key!'); }
+        }
+
+        function handleKeyPress(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+
+        /* TÍNH NĂNG CHỤP MÀN HÌNH TRỰC TIẾP VÀ NẠP VÀO CROPPER */
+        async function captureScreenAndCrop() {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { mediaSource: "screen" }
+                });
+                
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                stream.getTracks().forEach(track => track.stop());
+
+                const capturedBase64 = canvas.toDataURL('image/jpeg', 0.95);
+                const cropTarget = document.getElementById('cropperTargetImage');
+                cropTarget.src = capturedBase64;
+                
+                toggleModal('cropperModal', true);
+
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropTarget, {
+                    viewMode: 1,
+                    autoCropArea: 0.85,
+                    responsive: true,
+                    restore: false
+                });
+
+            } catch (err) {
+                if (err.name !== 'NotAllowedError') {
+                    alert('Không thể chụp màn hình: ' + err.message);
+                }
+            }
+        }
+
+        /* XỬ LÝ CHỌN VÀ CROP HÌNH ẢNH TỪ TỆP */
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const cropTarget = document.getElementById('cropperTargetImage');
+                cropTarget.src = e.target.result;
+                toggleModal('cropperModal', true);
+
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropTarget, {
+                    viewMode: 1,
+                    autoCropArea: 0.85,
+                    responsive: true,
+                    restore: false
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function applyCroppedImage() {
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 });
+            const croppedBase64 = canvas.toDataURL('image/jpeg', 0.88);
+
+            clearSelectedMedia();
+            currentBase64Image = { mime_type: 'image/jpeg', data: croppedBase64.split(',')[1], fullUrl: croppedBase64 };
+            
+            const img = document.getElementById('imagePreview');
+            img.src = croppedBase64; 
+            img.style.display = 'block';
+            
+            document.getElementById('fileName').innerText = 'Hình ảnh đã Crop';
+            document.getElementById('imageCaptionInput').style.display = 'block';
+            document.getElementById('imageCaptionInput').value = '';
+            document.getElementById('previewContainer').style.display = 'flex';
+
+            toggleModal('cropperModal', false);
+        }
+
+        function handleAudioSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                clearSelectedMedia();
+                currentBase64Audio = { mime_type: file.type || 'audio/mp3', data: e.target.result.split(',')[1], fullUrl: e.target.result };
+                const aud = document.getElementById('audioPreview');
+                aud.src = e.target.result; aud.style.display = 'block';
+                document.getElementById('fileName').innerText = file.name;
+                document.getElementById('previewContainer').style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSelectedMedia() {
+            currentBase64Image = null; currentBase64Audio = null;
+            document.getElementById('imageInput').value = ''; document.getElementById('audioInput').value = '';
+            document.getElementById('imagePreview').style.display = 'none'; document.getElementById('audioPreview').style.display = 'none';
+            document.getElementById('imageCaptionInput').style.display = 'none'; document.getElementById('imageCaptionInput').value = '';
+            document.getElementById('previewContainer').style.display = 'none';
+        }
+
+        function cleanText(text) { return text ? text.replace(/\*\*/g, '').replace(/[\u4e00-\u9fa5]/g, '').trim() : ''; }
+
+        function addMessageToChat(sender, htmlContent, isHtml = false, msgId = null) {
+            const box = document.getElementById('chatBox');
+            const id = msgId || 'msg-' + Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${sender}`; wrapper.id = id;
+
+            wrapper.innerHTML = `
+                <div class="message-header"><span>${sender === 'user' ? 'Bạn' : 'AI Assistant'}</span><span class="delete-btn" onclick="deleteMessage('${id}')">✕ Xóa</span></div>
+                <div class="message ${sender}" contenteditable="true" onblur="syncMessageContent('${id}')">${isHtml ? htmlContent : htmlContent}</div>
+            `;
+            box.appendChild(wrapper); box.scrollTop = box.scrollHeight;
+            return id;
+        }
+
+        function deleteMessage(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                const idx = el.getAttribute('data-index');
+                if (idx !== null && geminiMessages[idx]) geminiMessages.splice(idx, 1);
+                el.remove();
+            }
+        }
+
+        function syncMessageContent(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const idx = el.getAttribute('data-index');
+            if (idx !== null && geminiMessages[idx]) geminiMessages[idx].parts[0] = { text: el.querySelector('.message').innerText.trim() };
+        }
+
+        async function sendMessage() {
+            const text = document.getElementById('userInput').value.trim();
+            const apiKey = localStorage.getItem('gemini_api_key');
+            const captionText = document.getElementById('imageCaptionInput').value.trim();
+
+            if (!text && !currentBase64Image && !currentBase64Audio) return;
+            if (!apiKey) { toggleModal('apiModal', true); return; }
+
+            let userContentHtml = text;
+            if (currentBase64Image) {
+                userContentHtml += `<br><figure><img src="${currentBase64Image.fullUrl}">${captionText ? `<figcaption>${captionText}</figcaption>` : ''}</figure>`;
+            }
+            if (currentBase64Audio) userContentHtml += `<br><audio controls src="${currentBase64Audio.fullUrl}"></audio>`;
+            
+            const userMsgId = addMessageToChat('user', userContentHtml, true);
+            const parts = [];
+            if (text) parts.push({ text: text });
+            if (captionText) parts.push({ text: `[Chú thích hình ảnh kèm theo: ${captionText}]` });
+            if (currentBase64Image) parts.push({ inline_data: { mime_type: currentBase64Image.mime_type, data: currentBase64Image.data } });
+            if (currentBase64Audio) parts.push({ inline_data: { mime_type: currentBase64Audio.mime_type, data: currentBase64Audio.data } });
+
+            const userIndex = geminiMessages.length;
+            geminiMessages.push({ role: 'user', parts: parts });
+            document.getElementById(userMsgId).setAttribute('data-index', userIndex);
+
+            const imageForHistory = currentBase64Image ? currentBase64Image.fullUrl : null;
+            const promptForHistory = captionText || text;
+
+            document.getElementById('userInput').value = '';
+            clearSelectedMedia();
+            const loadingId = addMessageToChat('ai', '🔍 AI đang phân tích dữ liệu...');
+
+            try {
+                let response = cleanText(await callGeminiApi(apiKey, geminiMessages));
+                document.getElementById(loadingId).remove();
+                
+                const aiMsgId = addMessageToChat('ai', response);
+                geminiMessages.push({ role: 'model', parts: [{ text: response }] });
+                document.getElementById(aiMsgId).setAttribute('data-index', geminiMessages.length - 1);
+
+                if (imageForHistory) {
+                    uploadedImagesHistory.push({
+                        imgUrl: imageForHistory,
+                        caption: promptForHistory ? `${promptForHistory}` : `Hình ảnh phim`
+                    });
+                }
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                addMessageToChat('ai', `❌ Lỗi phân tích: ${err.message}`);
+            }
+        }
+
+        async function generateReport() {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) { toggleModal('apiModal', true); return; }
+            if (geminiMessages.length === 0) { alert('Vui lòng trò chuyện hoặc tải dữ liệu trước!'); return; }
+
+            const templateText = document.getElementById('templateEditor').value;
+            const reportEditor = document.getElementById('reportEditor');
+            reportEditor.value = "⏳ Đang tổng hợp báo cáo...";
+
+            let updatedContextText = "NỘI DUNG THẢO LUẬN:\n";
+            document.querySelectorAll('#chatBox .message-wrapper').forEach(el => {
+                updatedContextText += `${el.classList.contains('user') ? 'Bác sĩ' : 'AI Assistant'}: ${el.querySelector('.message').innerText}\n`;
+            });
+
+            const promptText = `Dựa vào MẪU BÁO CÁO CHUẨN và NỘI DUNG THẢO LUẬN dưới đây, tổng hợp thành BÁO CÁO CHẨN ĐOÁN HÌNH ẢNH tiếng Việt chuẩn y khoa.\n\nMẪU CHUẨN:\n${templateText}\n\n${updatedContextText}\n\nQuy tắc:\n1. Bắt đầu ngay vào nội dung báo cáo.\n2. Không dùng dấu ** và chữ Hán.`;
+            const reportMessages = [...geminiMessages, { role: 'user', parts: [{ text: promptText }] }];
+
+            try {
+                reportEditor.value = cleanText(await callGeminiApi(apiKey, reportMessages));
+            } catch (err) {
+                reportEditor.value = `❌ Không thể tạo báo cáo: ${err.message}`;
+            }
+        }
+
+        async function callGeminiApi(apiKey, contentsPayload) {
+            const selectedModel = document.getElementById('modelSelect').value;
+            const models = [selectedModel, 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro'];
+            const sysInst = { parts: [{ text: "Bạn là Trợ lý AI Chẩn đoán Hình ảnh. Trả lời bằng tiếng Việt y khoa. Không dùng ký tự **, không dùng chữ Hán." }] };
+
+            for (const model of models) {
+                try {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ system_instruction: sysInst, contents: contentsPayload })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.candidates && data.candidates[0].content.parts[0].text) return data.candidates[0].content.parts[0].text;
+                } catch (e) {}
+            }
+            throw new Error("Không thể kết nối Gemini API.");
+        }
+
+        function exportToPDF() {
+            const reportText = document.getElementById('reportEditor').value;
+            if (!reportText) { alert('Chưa có nội dung báo cáo!'); return; }
+
+            const name = document.getElementById('patientName').value || '..............';
+            const pid = document.getElementById('patientPid').value || '..............';
+            
+            const pdfContainer = document.getElementById('pdfContent');
+            pdfContainer.style.fontFamily = document.getElementById('fontFamilySelect').value;
+            document.getElementById('pdfPatientInfo').innerHTML = `<b>Họ và tên:</b> ${name} &nbsp;&nbsp; <b>Mã y tế:</b> ${pid}`;
+            document.getElementById('pdfReportText').innerText = reportText;
+            document.getElementById('pdfDoctorName').innerText = document.getElementById('doctorSelect').value || 'BS. Vũ thế Huynh';
+
+            const pdfGrid = document.getElementById('pdfImageGrid');
+            pdfGrid.innerHTML = '';
+            if (uploadedImagesHistory.length > 0) {
+                uploadedImagesHistory.forEach(imgObj => {
+                    const card = document.createElement('div');
+                    card.style.textAlign = 'center';
+                    card.style.border = '1px solid #ccc';
+                    card.style.padding = '6px';
+                    card.style.borderRadius = '4px';
+                    card.innerHTML = `<img src="${imgObj.imgUrl}" style="max-width:100%; max-height:180px;"><div style="font-size:10px; font-style:italic; margin-top:4px;">${imgObj.caption}</div>`;
+                    pdfGrid.appendChild(card);
+                });
+                document.getElementById('pdfImageSection').style.display = 'block';
+            } else {
+                document.getElementById('pdfImageSection').style.display = 'none';
+            }
+
+            const opt = { margin: 10, filename: `Bao_Cao_${pid}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+            html2pdf().set(opt).from(pdfContainer).save();
+        }
+
+        function exportMainPDF() {
+            const element = document.querySelector('.newsletter-view');
+            const opt = { margin: 10, filename: `Ban_Tin_Y_Khoa.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function copyReport() {
+            const reportEditor = document.getElementById('reportEditor');
+            reportEditor.select();
+            document.execCommand('copy');
+            alert('Đã sao chép báo cáo!');
+        }
+    </script>
+</body>
+</html>
