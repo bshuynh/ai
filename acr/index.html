@@ -45,7 +45,7 @@
         .main-container { display: flex; flex: 1; padding: 16px; gap: 16px; overflow: hidden; }
         
         .sidebar { width: 280px; background: white; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 12px; }
-        .sidebar-title { font-weight: bold; font-size: 13px; margin-bottom: 12px; color: #475569; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-title { font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #475569; display: flex; justify-content: space-between; align-items: center; }
 
         .newsletter-view { flex: 1; background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow-y: auto; padding: 30px 40px; }
         .paper-content { max-width: 800px; margin: 0 auto; }
@@ -58,14 +58,23 @@
         .paper-meta-box h4 { font-size: 15px; margin-bottom: 4px; color: #0369a1; }
         .paper-meta-box p { font-size: 12px; color: #334155; }
 
-        .section-title { font-size: 13px; font-weight: bold; text-transform: uppercase; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 20px 0 10px 0; }
+        .section-title { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 20px 0 10px 0; }
         
         .grid-two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px; line-height: 1.6; }
 
         .image-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-        .img-card { background: #0f172a; border-radius: 6px; padding: 6px; text-align: center; color: white; font-size: 11px; }
-        .img-card img { width: 100%; height: 180px; object-fit: contain; border-radius: 4px; }
+        .img-card { background: #0f172a; border-radius: 6px; padding: 6px; text-align: center; color: white; font-size: 11px; position: relative; overflow: hidden; }
+        
+        /* CSS ZOOM KÍNH LÚP KHI HOVER */
+        .zoom-container { position: relative; width: 100%; height: 200px; overflow: hidden; cursor: crosshair; border-radius: 4px; }
+        .zoom-container img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .zoom-lens {
+            position: absolute; border: 2px solid #38bdf8; border-radius: 50%; width: 140px; height: 140px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5), inset 0 0 8px rgba(255,255,255,0.4); pointer-events: none; display: none;
+            background-repeat: no-repeat; z-index: 10;
+        }
+
         .img-card .caption { padding: 4px 0; font-style: italic; color: #cbd5e1; word-break: break-word; }
 
         /* MODAL CHƯƠNG TRÌNH SOẠN BẢN TIN MỚI */
@@ -146,6 +155,12 @@
         .history-item-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 4px; color: #0284c7; }
         .history-item-sub { color: #64748b; font-size: 11px; }
 
+        /* MÃ STT TỰ ĐỘNG BADGE */
+        .case-number-badge {
+            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+            font-size: 10px; font-weight: bold; padding: 1px 5px; border-radius: 4px;
+        }
+
         .report-editor {
             width: 100%; height: 100%; border: none; padding: 12px;
             font-family: 'Times New Roman', Times, serif; font-size: 15px; line-height: 1.5; outline: none; resize: none;
@@ -190,6 +205,12 @@
 
         .cropper-container-wrapper { width: 100%; max-height: 380px; height: 380px; background: #000; overflow: hidden; border-radius: 6px; }
         .cropper-container-wrapper img { max-width: 100%; }
+        
+        /* FULLSCREEN IMAGE LIGHTBOX MODAL */
+        .lightbox-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+        .lightbox-modal img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 6px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .lightbox-caption { color: white; margin-top: 12px; font-size: 14px; font-style: italic; }
+        .lightbox-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 28px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -216,6 +237,10 @@
                 <span>💬 DANH SÁCH CA LÂM SÀNG</span>
                 <span style="color: #0284c7; cursor: pointer;" onclick="renderMainSidebar()">Làm mới</span>
             </div>
+            <!-- Ô tìm kiếm trang chính -->
+            <div style="margin-bottom: 8px;">
+                <input type="text" id="mainSearchInput" placeholder="🔍 Tìm tên/PID/STT..." oninput="renderMainSidebar()" style="font-size: 12px;">
+            </div>
             <div id="mainCaseList" class="history-list"></div>
         </div>
 
@@ -227,7 +252,7 @@
                         <div class="paper-title">BẢN TIN Y KHOA LÂM SÀNG</div>
                         <div class="paper-subtitle">Chuyên san Chẩn đoán Hình ảnh</div>
                     </div>
-                    <div class="case-tag">CASE STUDY</div>
+                    <div class="case-tag" id="mainCaseTag">CASE STUDY</div>
                 </div>
 
                 <div class="paper-meta-box">
@@ -238,12 +263,12 @@
                 <div class="grid-two-col">
                     <div>
                         <div class="section-title">1. TÓM TẮT LÂM SÀNG</div>
-                        <div id="mainClinicalSummary" style="font-size: 13px; line-height: 1.6; color: #334155;">
+                        <div id="mainClinicalSummary" style="font-size: 15px; line-height: 1.6; color: #334155; text-align: justify;">
                             Chưa có thông tin lâm sàng.
                         </div>
 
                         <div class="section-title">2. CHẨN ĐOÁN HÌNH ẢNH</div>
-                        <div id="mainReportText" style="font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: #0f172a;">
+                        <div id="mainReportText" style="font-size: 15px; line-height: 1.6; white-space: pre-wrap; color: #0f172a; text-align: justify;">
                             Chưa có báo cáo kết quả.
                         </div>
                     </div>
@@ -251,6 +276,7 @@
                     <div>
                         <div class="info-card">
                             <div style="font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px;">THÔNG TIN CA</div>
+                            <p><b>Mã STT:</b> <span id="infoStt" style="color: #0284c7; font-weight: bold;">--</span></p>
                             <p><b>Bác sĩ:</b> <span id="infoDoctor">BS. Vũ Thế Huynh</span></p>
                             <p><b>Bệnh nhân:</b> <span id="infoPatient">Chưa cập nhật</span></p>
                             <p><b>Mã y tế:</b> <span id="infoPid">--</span></p>
@@ -258,12 +284,22 @@
                     </div>
                 </div>
 
-                <div class="section-title">3. HÌNH ẢNH PHIM & MINH HỌA</div>
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>3. HÌNH ẢNH PHIM & MINH HỌA</span>
+                    <span style="font-size: 11px; font-weight: normal; color: #0284c7;">🔍 Rê chuột vào ảnh để Zoom • Click đúp để mở Toàn màn hình</span>
+                </div>
                 <div class="image-gallery" id="mainImageGallery">
-                    <!-- Ảnh sẽ được load vào đây -->
+                    <!-- Ảnh zoom sẽ được nạp động vào đây -->
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- LIGHTBOX MODAL BẢN TIN -->
+    <div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="" alt="Full view">
+        <div class="lightbox-caption" id="lightboxCaption"></div>
     </div>
 
     <!-- MODAL CHƯƠNG TRÌNH SOẠN BẢN TIN MỚI -->
@@ -289,7 +325,7 @@
                     <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="openTrashModal()">🗑️ Thùng rác</button>
                 </div>
                 <div class="controls">
-                    <input type="text" id="searchPatientInput" placeholder="🔍 Tìm tên/Mã YT..." oninput="filterPatientRecords()">
+                    <input type="text" id="searchPatientInput" placeholder="🔍 Tìm tên/PID/STT..." oninput="filterPatientRecords()">
                 </div>
                 <div class="history-list" id="historyList"></div>
             </div>
@@ -459,7 +495,6 @@
         <div class="modal-content">
             <h3 style="margin-bottom: 12px; color: #0f172a;">⚙️ Cấu Hình Hệ Thống</h3>
             
-            <!-- KHỐI CẤU HÌNH FIREBASE CLOUD DATABASE -->
             <div class="firebase-config-box">
                 <h4>☁️ Cấu hình Firebase Cloud Database</h4>
                 <label style="font-size: 11px; font-weight: bold; color: #475569; display: block; margin-bottom: 4px;">Firebase Realtime Database URL:</label>
@@ -572,7 +607,6 @@
                 window.fbChild = child;
                 window.fbRemove = remove;
 
-                // Lắng nghe dữ liệu trực tiếp từ node 'acr_cases'
                 const recordsRef = ref(db, 'acr_cases');
                 onValue(recordsRef, (snapshot) => {
                     const data = snapshot.val() || {};
@@ -632,7 +666,27 @@
             if (!savedKey) toggleModal('apiModal', true);
         };
 
-        /* XỬ LÝ BẢO MẬT ADMIN */
+        function getOrderedRecords() {
+            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const keys = Object.keys(records).filter(k => !records[k].isDeleted);
+
+            keys.sort((a, b) => {
+                const timeA = records[a].timestamp || parseInt(a.replace('case_', '')) || 0;
+                const timeB = records[b].timestamp || parseInt(b.replace('case_', '')) || 0;
+                return timeA - timeB;
+            });
+
+            return keys.map((key, index) => {
+                const sttNumber = index + 1;
+                const sttCode = '#' + String(sttNumber).padStart(3, '0');
+                return {
+                    ...records[key],
+                    sttIndex: sttNumber,
+                    sttCode: sttCode
+                };
+            });
+        }
+
         function checkAdminAuthState() {
             const badge = document.getElementById('adminBadgeText');
             const logoutBtn = document.getElementById('logoutAdminBtn');
@@ -770,24 +824,31 @@
         }
 
         function renderMainSidebar() {
-            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const allOrdered = getOrderedRecords().reverse();
             const listContainer = document.getElementById('mainCaseList');
+            const filterText = (document.getElementById('mainSearchInput')?.value || '').trim().toLowerCase();
             listContainer.innerHTML = '';
 
-            const activeKeys = Object.keys(records).filter(k => !records[k].isDeleted).reverse();
+            const filtered = allOrdered.filter(item => {
+                const name = (item.name || '').toLowerCase();
+                const pid = (item.pid || '').toLowerCase();
+                const stt = (item.sttCode || '').toLowerCase();
+                const sttNum = String(item.sttIndex || '');
+                return name.includes(filterText) || pid.includes(filterText) || stt.includes(filterText) || sttNum === filterText;
+            });
 
-            if(activeKeys.length === 0) {
-                listContainer.innerHTML = '<div style="font-size:12px; color:#64748b; padding:8px;">Chưa có ca nào được lưu.</div>';
+            if(filtered.length === 0) {
+                listContainer.innerHTML = '<div style="font-size:12px; color:#64748b; padding:8px;">Không tìm thấy ca khớp lệnh.</div>';
                 return;
             }
 
-            activeKeys.forEach((key, idx) => {
-                const item = records[key];
+            filtered.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 div.innerHTML = `
                     <div class="history-item-header">
                         <span>${item.name} (${item.yob || 'N/A'})</span>
+                        <span class="case-number-badge">${item.sttCode}</span>
                     </div>
                     <div class="history-item-sub">Mã YT: <b>${item.pid}</b></div>
                     <div class="history-item-sub">BS: ${item.doctorName || 'BS. Vũ Thế Huynh'}</div>
@@ -799,17 +860,20 @@
             });
         }
 
+        /* THÊM TÍNH NĂNG ZOOM KÍNH LÚP TRỰC TIẾP TRÊN BẢN TIN */
         function displayCaseOnMainView(recordId) {
-            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
-            const item = records[recordId];
+            const allRecords = getOrderedRecords();
+            const item = allRecords.find(r => r.id === recordId);
             if (!item || item.isDeleted) return;
 
+            document.getElementById('mainCaseTag').innerText = `CA ${item.sttCode}`;
             document.getElementById('mainCaseTitle').innerText = item.diagnosis || 'Chưa có tiêu đề ca bệnh';
             document.getElementById('mainPatientName').innerText = `${item.name} (${item.yob || 'N/A'})`;
             document.getElementById('mainDoctorName').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
             document.getElementById('mainClinicalSummary').innerText = item.diagnosis || 'Chưa cập nhật thông tin lâm sàng.';
             document.getElementById('mainReportText').innerText = item.reportText || 'Chưa có kết quả báo cáo.';
             
+            document.getElementById('infoStt').innerText = item.sttCode;
             document.getElementById('infoDoctor').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
             document.getElementById('infoPatient').innerText = item.name;
             document.getElementById('infoPid').innerText = item.pid;
@@ -817,15 +881,75 @@
             const gallery = document.getElementById('mainImageGallery');
             gallery.innerHTML = '';
             if (item.uploadedImagesHistory && item.uploadedImagesHistory.length > 0) {
-                item.uploadedImagesHistory.forEach(imgObj => {
+                item.uploadedImagesHistory.forEach((imgObj, idx) => {
                     const card = document.createElement('div');
                     card.className = 'img-card';
-                    card.innerHTML = `<img src="${imgObj.imgUrl}"><div class="caption">${imgObj.caption || 'Hình ảnh phim'}</div>`;
+                    card.innerHTML = `
+                        <div class="zoom-container" id="zoomContainer_${idx}" ondblclick="openLightbox('${imgObj.imgUrl}', '${imgObj.caption || 'Hình ảnh phim'}')">
+                            <div class="zoom-lens" id="zoomLens_${idx}"></div>
+                            <img id="targetImg_${idx}" src="${imgObj.imgUrl}">
+                        </div>
+                        <div class="caption">${imgObj.caption || 'Hình ảnh phim'}</div>
+                    `;
                     gallery.appendChild(card);
+                    
+                    // Khởi tạo sự kiện Zoom Kính Lúp
+                    initMagnifier(`targetImg_${idx}`, `zoomLens_${idx}`, `zoomContainer_${idx}`);
                 });
             } else {
                 gallery.innerHTML = '<p style="font-size:12px; color:#64748b; grid-column:span 2;">Không có hình ảnh đi kèm ca này.</p>';
             }
+        }
+
+        /* HÀM KHỞI TẠO TÍNH NĂNG KÍNH LÚP ZOOM TỪNG VÙNG */
+        function initMagnifier(imgID, lensID, containerID) {
+            const img = document.getElementById(imgID);
+            const lens = document.getElementById(lensID);
+            const container = document.getElementById(containerID);
+            const zoomLevel = 2.5; // Hệ số phóng to x2.5
+
+            container.addEventListener("mousemove", moveLens);
+            container.addEventListener("mouseenter", () => {
+                lens.style.display = "block";
+                lens.style.backgroundImage = `url('${img.src}')`;
+                const rect = img.getBoundingClientRect();
+                lens.style.backgroundSize = (rect.width * zoomLevel) + "px " + (rect.height * zoomLevel) + "px";
+            });
+            container.addEventListener("mouseleave", () => {
+                lens.style.display = "none";
+            });
+
+            function moveLens(e) {
+                const rect = img.getBoundingClientRect();
+                let x = e.clientX - rect.left;
+                let y = e.clientY - rect.top;
+
+                if (x < 0) x = 0;
+                if (x > rect.width) x = rect.width;
+                if (y < 0) y = 0;
+                if (y > rect.height) y = rect.height;
+
+                const lensWidth = lens.offsetWidth / 2;
+                const lensHeight = lens.offsetHeight / 2;
+
+                lens.style.left = (x - lensWidth) + "px";
+                lens.style.top = (y - lensHeight) + "px";
+
+                const bgX = (x * zoomLevel) - lensWidth;
+                const bgY = (y * zoomLevel) - lensHeight;
+
+                lens.style.backgroundPosition = `-${bgX}px -${bgY}px`;
+            }
+        }
+
+        /* LIGHTBOX PHÓNG TO TOÀN MÀN HÌNH */
+        function openLightbox(url, caption) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightboxCaption').innerText = caption;
+            document.getElementById('lightboxModal').style.display = 'flex';
+        }
+        function closeLightbox() {
+            document.getElementById('lightboxModal').style.display = 'none';
         }
 
         function changeReportStyle() {
@@ -881,16 +1005,17 @@
             alert('Đã lưu mẫu chuẩn mới!');
         }
 
-        /* ĐỒNG BỘ LƯU DỮ LIỆU BẢN TIN LÊN FIREBASE NODE acr_cases */
         function savePatientRecord() {
             const name = document.getElementById('patientName').value.trim();
             const pid = document.getElementById('patientPid').value.trim();
             if (!name && !pid) { alert('Vui lòng nhập Họ tên hoặc Mã y tế để lưu ca chụp!'); return; }
 
-            const recordId = currentPatientRecordId || 'case_' + Date.now();
+            const timestamp = Date.now();
+            const recordId = currentPatientRecordId || 'case_' + timestamp;
             
             const recordData = {
                 id: recordId,
+                timestamp: timestamp,
                 name: name || 'Chưa tên',
                 yob: document.getElementById('patientYob').value,
                 pid: pid || 'Không có',
@@ -908,12 +1033,10 @@
                 updatedAt: new Date().toLocaleString('vi-VN')
             };
 
-            // 1. Lưu Local Storage
             const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
             records[recordId] = recordData;
             localStorage.setItem('patient_records', JSON.stringify(records));
 
-            // 2. Đẩy trực tiếp vào node 'acr_cases' trên Cloud Firebase Realtime Database
             if (window.firebaseDB && window.fbRef && window.fbSet) {
                 window.fbSet(window.fbRef(window.firebaseDB, 'acr_cases/' + recordId), recordData)
                 .then(() => {
@@ -933,27 +1056,35 @@
         }
 
         function renderHistoryList(filterText = '') {
-            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+            const allOrdered = getOrderedRecords().reverse();
             const listContainer = document.getElementById('historyList');
+            const keyword = (filterText || document.getElementById('searchPatientInput')?.value || '').trim().toLowerCase();
             listContainer.innerHTML = '';
 
-            const keys = Object.keys(records).filter(k => !records[k].isDeleted).reverse();
-            keys.forEach(key => {
-                const item = records[key];
-                if (item.name.toLowerCase().includes(filterText.toLowerCase()) || item.pid.toLowerCase().includes(filterText.toLowerCase())) {
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.innerHTML = `
-                        <div class="history-item-header">
-                            <span>${item.name} (${item.yob || 'N/A'})</span>
+            const filtered = allOrdered.filter(item => {
+                const name = (item.name || '').toLowerCase();
+                const pid = (item.pid || '').toLowerCase();
+                const stt = (item.sttCode || '').toLowerCase();
+                const sttNum = String(item.sttIndex || '');
+                return name.includes(keyword) || pid.includes(keyword) || stt.includes(keyword) || sttNum === keyword;
+            });
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="history-item-header">
+                        <span>${item.name} (${item.yob || 'N/A'})</span>
+                        <div>
+                            <span class="case-number-badge">${item.sttCode}</span>
                             <span class="delete-btn" title="Xóa ca này" onclick="deletePatientRecord(event, '${item.id}')">✕</span>
                         </div>
-                        <div class="history-item-sub">Mã YT: <b>${item.pid}</b></div>
-                        <div class="history-item-sub">BS: ${item.doctorName || 'Chưa chọn'}</div>
-                    `;
-                    div.onclick = (e) => { if (!e.target.classList.contains('delete-btn')) loadPatientRecord(item.id); };
-                    listContainer.appendChild(div);
-                }
+                    </div>
+                    <div class="history-item-sub">Mã YT: <b>${item.pid}</b></div>
+                    <div class="history-item-sub">BS: ${item.doctorName || 'Chưa chọn'}</div>
+                `;
+                div.onclick = (e) => { if (!e.target.classList.contains('delete-btn')) loadPatientRecord(item.id); };
+                listContainer.appendChild(div);
             });
         }
 
@@ -979,7 +1110,6 @@
             uploadedImagesHistory = record.uploadedImagesHistory || [];
         }
 
-        /* XÓA MỀM & ĐỒNG BỘ TRÊN NODE acr_cases */
         function deletePatientRecord(event, recordId) {
             if (event) event.stopPropagation();
 
@@ -1098,7 +1228,6 @@
             }
         }
 
-        /* LƯU API KEY VÀ ĐỔI KẾT NỐI FIREBASE URL DỘNG */
         function saveSystemSettings() {
             const key = document.getElementById('apiKeyInput').value.trim();
             const firebaseUrl = document.getElementById('firebaseUrlInput').value.trim();
@@ -1117,7 +1246,6 @@
 
         function handleKeyPress(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 
-        /* TÍNH NĂNG CHỤP MÀN HÌNH TRỰC TIẾP VÀ NẠP VÀO CROPPER */
         async function captureScreenAndCrop() {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -1157,7 +1285,6 @@
             }
         }
 
-        /* XỬ LÝ CHỌN VÀ CROP HÌNH ẢNH TỪ TỆP */
         function handleImageSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
