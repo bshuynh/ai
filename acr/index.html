@@ -95,6 +95,19 @@
 
         .img-card .caption { padding: 4px 0; font-style: italic; color: #cbd5e1; word-break: break-word; }
 
+        /* BÀI HỌC CỐT LÕI (CLINICAL PEARLS) STYLING */
+        .clinical-pearls-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #16a34a;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #14532d;
+        }
+
         /* MODAL CHƯƠNG TRÌNH SOẠN BẢN TIN MỚI */
         .editor-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -311,6 +324,12 @@
                 <div class="image-gallery" id="mainImageGallery">
                     <!-- Ảnh zoom sẽ được nạp động vào đây -->
                 </div>
+
+                <!-- MỤC 4: CLINICAL PEARLS (BÀI HỌC CỐT LÕI) -->
+                <div class="section-title">4. CLINICAL PEARLS (BÀI HỌC CỐT LÕI)</div>
+                <div class="clinical-pearls-box" id="mainClinicalPearls">
+                    Chưa có bài học cốt lõi cho ca lâm sàng này.
+                </div>
             </div>
         </div>
     </div>
@@ -426,7 +445,7 @@
             <!-- Cột 4: Báo cáo & PDF -->
             <div class="panel report-panel">
                 <div class="panel-header">
-                    <span>Báo Cáo Hoàn Chỉnh</span>
+                    <span>Báo Cáo Hoàn Chỉnh & Clinical Pearls</span>
                     <div style="display: flex; gap: 4px;">
                         <button class="btn btn-secondary" style="padding: 3px 6px;" onclick="copyReport()">📋 Copy</button>
                         <button class="btn btn-primary" style="padding: 3px 6px;" onclick="exportToPDF()">📄 Xuất PDF</button>
@@ -451,7 +470,13 @@
                         </select>
                     </div>
                 </div>
-                <textarea id="reportEditor" class="report-editor" placeholder="Báo cáo kết quả sẽ tự động xuất ra tại đây..."></textarea>
+                <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden; gap: 8px; padding-top: 6px;">
+                    <textarea id="reportEditor" class="report-editor" style="flex: 2;" placeholder="Báo cáo kết quả sẽ tự động xuất ra tại đây..."></textarea>
+                    <div style="border-top: 1px dashed var(--border-color); padding-top: 6px; display: flex; flex-direction: column; flex: 1;">
+                        <label style="font-size: 11px; font-weight: bold; color: #16a34a; margin-bottom: 4px;">💡 Clinical Pearls (Bài Học Cốt LÕi):</label>
+                        <textarea id="clinicalPearlsEditor" class="report-editor" style="flex: 1; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 6px;" placeholder="Nhập bài học lâm sàng cốt lõi hoặc để AI tự động trích xuất tại đây..."></textarea>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -585,7 +610,11 @@
                 <h2 style="margin: 0; text-transform: uppercase; font-size: 18px;">BÁO CÁO KẾT QUẢ CHẨN ĐOÁN HÌNH ẢNH</h2>
             </div>
             <div id="pdfPatientInfo" style="margin-bottom: 15px; line-height: 1.6; border-bottom: 1px dashed #ccc; padding-bottom: 10px;"></div>
-            <div id="pdfReportText" style="white-space: pre-wrap; line-height: 1.6; margin-bottom: 25px;"></div>
+            <div id="pdfReportText" style="white-space: pre-wrap; line-height: 1.6; margin-bottom: 15px;"></div>
+            <div id="pdfClinicalPearlsSection" style="margin-bottom: 20px; padding: 10px; background: #f0fdf4; border-left: 3px solid #16a34a; font-size: 13px;">
+                <b>CLINICAL PEARLS (BÀI HỌC CỐT LÕI):</b>
+                <div id="pdfClinicalPearlsText" style="white-space: pre-wrap; margin-top: 4px;"></div>
+            </div>
             <div id="pdfFooterSignature" style="display: flex; justify-content: flex-end; margin-top: 20px; text-align: center;">
                 <div style="width: 250px;">
                     <p id="pdfReportDate" style="font-style: italic; margin-bottom: 5px;"></p>
@@ -911,6 +940,7 @@
             document.getElementById('mainDoctorName').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
             document.getElementById('mainClinicalSummary').innerText = item.diagnosis || 'Chưa cập nhật thông tin lâm sàng.';
             document.getElementById('mainReportText').innerText = item.reportText || 'Chưa có kết quả báo cáo.';
+            document.getElementById('mainClinicalPearls').innerText = item.clinicalPearls || 'Chưa có bài học cốt lõi cho ca lâm sàng này.';
             
             document.getElementById('infoStt').innerText = item.sttCode;
             document.getElementById('infoDoctor').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
@@ -1062,6 +1092,7 @@
                 chatHtml: document.getElementById('chatBox').innerHTML,
                 geminiMessages: geminiMessages,
                 reportText: document.getElementById('reportEditor').value,
+                clinicalPearls: document.getElementById('clinicalPearlsEditor').value,
                 uploadedImagesHistory: uploadedImagesHistory,
                 selectedFont: document.getElementById('fontFamilySelect').value,
                 selectedFontSize: document.getElementById('fontSizeSelect').value,
@@ -1146,6 +1177,7 @@
             document.getElementById('templateEditor').value = record.templateText || '';
             document.getElementById('chatBox').innerHTML = record.chatHtml || '';
             document.getElementById('reportEditor').value = record.reportText || '';
+            document.getElementById('clinicalPearlsEditor').value = record.clinicalPearls || '';
             
             geminiMessages = record.geminiMessages || [];
             uploadedImagesHistory = record.uploadedImagesHistory || [];
@@ -1259,6 +1291,7 @@
                     <div class="message ai" contenteditable="true" onblur="syncMessageContent('msg-init')">Đã khởi tạo ca chụp mới. Nhập thông tin hành chính và dữ liệu để bắt đầu.</div>
                 </div>`;
             document.getElementById('reportEditor').value = '';
+            document.getElementById('clinicalPearlsEditor').value = '';
             
             // Xóa nội dung tìm kiếm trong ô editor khi tạo ca mới
             if (document.getElementById('editorSearchInput')) {
@@ -1486,20 +1519,46 @@
 
             const templateText = document.getElementById('templateEditor').value;
             const reportEditor = document.getElementById('reportEditor');
+            const clinicalPearlsEditor = document.getElementById('clinicalPearlsEditor');
+            
             reportEditor.value = "⏳ Đang tổng hợp báo cáo...";
+            clinicalPearlsEditor.value = "⏳ Đang trích xuất Clinical Pearls...";
 
             let updatedContextText = "NỘI DUNG THẢO LUẬN:\n";
             document.querySelectorAll('#chatBox .message-wrapper').forEach(el => {
                 updatedContextText += `${el.classList.contains('user') ? 'Bác sĩ' : 'AI Assistant'}: ${el.querySelector('.message').innerText}\n`;
             });
 
-            const promptText = `Dựa vào MẪU BÁO CÁO CHUẨN và NỘI DUNG THẢO LUẬN dưới đây, tổng hợp thành BÁO CÁO CHẨN ĐOÁN HÌNH ẢNH tiếng Việt chuẩn y khoa.\n\nMẪU CHUẨN:\n${templateText}\n\n${updatedContextText}\n\nQuy tắc:\n1. Bắt đầu ngay vào nội dung báo cáo.\n2. Không dùng dấu ** và chữ Hán.`;
+            const promptText = `Dựa vào MẪU BÁO CÁO CHUẨN và NỘI DUNG THẢO LUẬN dưới đây, hãy thực hiện 2 nhiệm vụ:
+1. BÁO CÁO CHẨN ĐOÁN HÌNH ẢNH tiếng Việt chuẩn y khoa.
+2. Trích xuất 1-3 CLINICAL PEARLS (Bài học lâm sàng cốt lõi) súc tích, đắt giá nhất liên quan đến ca bệnh này.
+
+Phân tách 2 phần bằng dòng chữ: "===CLINICAL_PEARLS==="
+
+MẪU CHUẨN:
+${templateText}
+
+${updatedContextText}
+
+Quy tắc:
+- Không dùng dấu ** và chữ Hán.
+- Phần Báo cáo bắt đầu ngay vào nội dung.`;
+
             const reportMessages = [...geminiMessages, { role: 'user', parts: [{ text: promptText }] }];
 
             try {
-                reportEditor.value = cleanText(await callGeminiApi(apiKey, reportMessages));
+                const fullResponse = cleanText(await callGeminiApi(apiKey, reportMessages));
+                if (fullResponse.includes("===CLINICAL_PEARLS===")) {
+                    const parts = fullResponse.split("===CLINICAL_PEARLS===");
+                    reportEditor.value = parts[0].trim();
+                    clinicalPearlsEditor.value = parts[1].trim();
+                } else {
+                    reportEditor.value = fullResponse;
+                    clinicalPearlsEditor.value = "Rút ra kinh nghiệm lâm sàng, chẩn đoán phân biệt chính xác dựa trên các dấu hiệu đặc trưng trên phim.";
+                }
             } catch (err) {
                 reportEditor.value = `❌ Không thể tạo báo cáo: ${err.message}`;
+                clinicalPearlsEditor.value = `❌ Không thể trích xuất bài học.`;
             }
         }
 
@@ -1528,11 +1587,21 @@
 
             const name = document.getElementById('patientName').value || '..............';
             const pid = document.getElementById('patientPid').value || '..............';
+            const clinicalPearls = document.getElementById('clinicalPearlsEditor').value;
             
             const pdfContainer = document.getElementById('pdfContent');
             pdfContainer.style.fontFamily = document.getElementById('fontFamilySelect').value;
             document.getElementById('pdfPatientInfo').innerHTML = `<b>Họ và tên:</b> ${name} &nbsp;&nbsp; <b>Mã y tế:</b> ${pid}`;
             document.getElementById('pdfReportText').innerText = reportText;
+            
+            const pearlsSection = document.getElementById('pdfClinicalPearlsSection');
+            if (clinicalPearls && clinicalPearls.trim()) {
+                document.getElementById('pdfClinicalPearlsText').innerText = clinicalPearls;
+                pearlsSection.style.display = 'block';
+            } else {
+                pearlsSection.style.display = 'none';
+            }
+
             document.getElementById('pdfDoctorName').innerText = document.getElementById('doctorSelect').value || 'BS. Vũ thế Huynh';
 
             const pdfGrid = document.getElementById('pdfImageGrid');
