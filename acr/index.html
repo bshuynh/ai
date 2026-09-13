@@ -47,7 +47,7 @@
         .sidebar { width: 280px; background: white; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 12px; }
         .sidebar-title { font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #475569; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Ô Ô TÌM KIẾM LIGHTWEIGHT */
+        /* Ô TÌM KIẾM LIGHTWEIGHT */
         .search-box-wrapper { margin-bottom: 8px; }
         .search-input-sm {
             width: 100%;
@@ -256,9 +256,9 @@
                 <span style="color: #0284c7; cursor: pointer;" onclick="renderMainSidebar()">Làm mới</span>
             </div>
 
-            <!-- Ô TÌM KIẾM NHẸ TRANG CHÍNH -->
+            <!-- Ô TÌM KIẾM MẶC ĐỊNH ĐỂ TRỐNG -->
             <div class="search-box-wrapper">
-                <input type="text" id="mainSearchInput" class="search-input-sm" placeholder="🔍 Tìm theo Tên, PID hoặc Mã STT..." oninput="renderMainSidebar()">
+                <input type="text" id="mainSearchInput" class="search-input-sm" placeholder="🔍 Tìm theo Tên, PID hoặc Mã STT..." value="" oninput="renderMainSidebar()">
             </div>
 
             <div id="mainCaseList" class="history-list"></div>
@@ -345,9 +345,9 @@
                     <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="openTrashModal()">🗑️ Thùng rác</button>
                 </div>
 
-                <!-- Ô TÌM KIẾM NHẸ TRONG BẢNG BÁC SĨ SOẠN THẢO -->
+                <!-- Ô TÌM KIẾM MẶC ĐỊNH ĐỂ TRỐNG -->
                 <div class="search-box-wrapper" style="padding: 6px 6px 0 6px;">
-                    <input type="text" id="editorSearchInput" class="search-input-sm" placeholder="🔍 Tìm Tên, PID, STT..." oninput="renderHistoryList()">
+                    <input type="text" id="editorSearchInput" class="search-input-sm" placeholder="🔍 Tìm Tên, PID, STT..." value="" oninput="renderHistoryList()">
                 </div>
 
                 <div class="history-list" id="historyList"></div>
@@ -679,6 +679,10 @@
         let isAdminAuthenticated = false;
 
         window.onload = function() {
+            // Reset giá trị tìm kiếm về chuỗi rỗng khi tải lại trang
+            if (document.getElementById('mainSearchInput')) document.getElementById('mainSearchInput').value = '';
+            if (document.getElementById('editorSearchInput')) document.getElementById('editorSearchInput').value = '';
+
             initDoctors();
             initTemplates();
             renderHistoryList();
@@ -1255,6 +1259,12 @@
                     <div class="message ai" contenteditable="true" onblur="syncMessageContent('msg-init')">Đã khởi tạo ca chụp mới. Nhập thông tin hành chính và dữ liệu để bắt đầu.</div>
                 </div>`;
             document.getElementById('reportEditor').value = '';
+            
+            // Xóa nội dung tìm kiếm trong ô editor khi tạo ca mới
+            if (document.getElementById('editorSearchInput')) {
+                document.getElementById('editorSearchInput').value = '';
+                renderHistoryList();
+            }
         }
 
         function toggleModal(modalId, show) {
