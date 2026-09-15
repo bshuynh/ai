@@ -1337,7 +1337,7 @@
             document.getElementById(modalId).style.display = show ? 'flex' : 'none';
             if (show && modalId === 'apiModal') {
                 document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-                document.getElementById('firebaseUrlInput').value = localStorage.getItem('firebase_db_url') || "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebaseio.com/";
+                document.getElementById('firebaseUrlInput').value = localStorage.getItem('firebase_db_url') || "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebasedatabase.app/acr_cases";
             }
         }
 
