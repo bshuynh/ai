@@ -10,6 +10,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
+    <!-- Thư viện đọc File PDF & Word (.docx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
     <style>
         :root {
             --bg-primary: #f1f5f9;
@@ -95,7 +99,7 @@
 
         .img-card .caption { padding: 4px 0; font-style: italic; color: #cbd5e1; word-break: break-word; }
 
-        /* BÀI HỌC CỐT LÕI (CLINICAL PEARLS) STYLING */
+        /* BÀI HỌC CỐT LÕI (CLINICAL PEARLS) STYLING - FONT SIZE 18PX */
         .clinical-pearls-box {
             background-color: #f0fdf4;
             border: 1px solid #bbf7d0;
@@ -103,9 +107,10 @@
             border-radius: 6px;
             padding: 14px 18px;
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 18px;
             line-height: 1.6;
             color: #14532d;
+            font-weight: 500;
         }
 
         /* MODAL CHƯƠNG TRÌNH SOẠN BẢN TIN MỚI */
@@ -186,7 +191,6 @@
         .history-item-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 4px; color: #0284c7; }
         .history-item-sub { color: #64748b; font-size: 11px; }
 
-        /* MÃ STT TỰ ĐỘNG BADGE */
         .case-number-badge {
             background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
             font-size: 10px; font-weight: bold; padding: 1px 5px; border-radius: 4px;
@@ -211,7 +215,6 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; }
         .modal-content { background: white; padding: 20px; border-radius: 8px; width: 480px; max-width: 95vw; }
 
-        /* KHỐI CẤU HÌNH FIREBASE UI */
         .firebase-config-box {
             background: #f0f9ff;
             border: 1px solid #bae6fd;
@@ -237,7 +240,6 @@
         .cropper-container-wrapper { width: 100%; max-height: 380px; height: 380px; background: #000; overflow: hidden; border-radius: 6px; }
         .cropper-container-wrapper img { max-width: 100%; }
         
-        /* FULLSCREEN IMAGE LIGHTBOX MODAL */
         .lightbox-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
         .lightbox-modal img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 6px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
         .lightbox-caption { color: white; margin-top: 12px; font-size: 14px; font-style: italic; }
@@ -251,7 +253,7 @@
         <div class="logo">
             📑 BẢN TIN Y KHOA LÂM SÀNG 
             <span class="admin-badge" id="adminBadgeText">🔒 Chưa xác thực Admin</span>
-            <span class="cloud-badge" id="cloudSyncStatus">☁️ Firebase Ready</span>
+            <span class="cloud-badge" id="cloudSyncStatus">☁️ Đang kết nối Cloud...</span>
         </div>
         <div class="header-actions">
             <button class="btn-header-new" onclick="handleOpenEditorWithAuth()">➕ Soạn Bản Tin Mới</button>
@@ -269,7 +271,6 @@
                 <span style="color: #0284c7; cursor: pointer;" onclick="renderMainSidebar()">Làm mới</span>
             </div>
 
-            <!-- Ô TÌM KIẾM MẶC ĐỊNH ĐỂ TRỐNG -->
             <div class="search-box-wrapper">
                 <input type="text" id="mainSearchInput" class="search-input-sm" placeholder="🔍 Tìm theo Tên, PID hoặc Mã STT..." value="" oninput="renderMainSidebar()">
             </div>
@@ -325,7 +326,7 @@
                     <!-- Ảnh zoom sẽ được nạp động vào đây -->
                 </div>
 
-                <!-- MỤC 4: CLINICAL PEARLS (BÀI HỌC CỐT LÕI) -->
+                <!-- MỤC 4: CLINICAL PEARLS (BÀI HỌC CỐT LÕI) - CỠ CHỮ 18PX -->
                 <div class="section-title">4. CLINICAL PEARLS (BÀI HỌC CỐT LÕI)</div>
                 <div class="clinical-pearls-box" id="mainClinicalPearls">
                     Chưa có bài học cốt lõi cho ca lâm sàng này.
@@ -364,7 +365,6 @@
                     <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="openTrashModal()">🗑️ Thùng rác</button>
                 </div>
 
-                <!-- Ô TÌM KIẾM MẶC ĐỊNH ĐỂ TRỐNG -->
                 <div class="search-box-wrapper" style="padding: 6px 6px 0 6px;">
                     <input type="text" id="editorSearchInput" class="search-input-sm" placeholder="🔍 Tìm Tên, PID, STT..." value="" oninput="renderHistoryList()">
                 </div>
@@ -408,7 +408,7 @@
                 <div class="chat-box" id="chatBox">
                     <div class="message-wrapper ai" id="msg-init">
                         <div class="message-header"><span>AI Assistant</span></div>
-                        <div class="message ai" contenteditable="true" onblur="syncMessageContent('msg-init')">Nhập mô tả, tải ảnh phim, chụp màn hình trực tiếp hoặc ghi âm/upload audio đọc kết quả để AI hỗ trợ phân tích.</div>
+                        <div class="message ai" contenteditable="true" onblur="syncMessageContent('msg-init')">Nhập mô tả, tải ảnh phim, tài liệu (PDF, Word), chụp màn hình trực tiếp hoặc ghi âm/upload audio đọc kết quả để AI hỗ trợ phân tích.</div>
                     </div>
                 </div>
 
@@ -424,12 +424,15 @@
                     </div>
 
                     <div class="chat-input-area">
+                        <!-- CÁC THÀNH PHẦN INPUT UPLOAD FILE -->
                         <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
                         <input type="file" id="audioInput" accept="audio/*" style="display: none;" onchange="handleAudioSelect(event)">
+                        <input type="file" id="docInput" accept=".pdf,.docx,.doc,.txt" style="display: none;" onchange="handleDocumentSelect(event)">
                         
                         <div class="media-buttons">
                             <button class="btn btn-capture" title="Chụp & Cắt màn hình trực tiếp" onclick="captureScreenAndCrop()">📸 Crop Màn Hình</button>
                             <button class="btn btn-secondary" title="Tải ảnh phim có sẵn & Crop" onclick="document.getElementById('imageInput').click()">📷 Upload Ảnh</button>
+                            <button class="btn btn-secondary" title="Tải file PDF, Word, Txt" onclick="document.getElementById('docInput').click()">📄 Tài liệu (PDF/Word)</button>
                             <button class="btn btn-secondary" title="Tải file âm thanh" onclick="document.getElementById('audioInput').click()">🎙️ Audio</button>
                         </div>
                         <textarea id="userInput" rows="3" placeholder="Nhập văn bản, mô tả tổn thương chi tiết..." onkeydown="handleKeyPress(event)"></textarea>
@@ -473,8 +476,8 @@
                 <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden; gap: 8px; padding-top: 6px;">
                     <textarea id="reportEditor" class="report-editor" style="flex: 2;" placeholder="Báo cáo kết quả sẽ tự động xuất ra tại đây..."></textarea>
                     <div style="border-top: 1px dashed var(--border-color); padding-top: 6px; display: flex; flex-direction: column; flex: 1;">
-                        <label style="font-size: 11px; font-weight: bold; color: #16a34a; margin-bottom: 4px;">💡 Clinical Pearls (Bài Học Cốt LÕi):</label>
-                        <textarea id="clinicalPearlsEditor" class="report-editor" style="flex: 1; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 6px;" placeholder="Nhập bài học lâm sàng cốt lõi hoặc để AI tự động trích xuất tại đây..."></textarea>
+                        <label style="font-size: 11px; font-weight: bold; color: #16a34a; margin-bottom: 4px;">💡 Clinical Pearls (Bài Học Cốt Lõi):</label>
+                        <textarea id="clinicalPearlsEditor" class="report-editor" style="flex: 1; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 6px; font-size: 14px;" placeholder="Nhập bài học lâm sàng cốt lõi tại đây..."></textarea>
                     </div>
                 </div>
             </div>
@@ -613,7 +616,7 @@
             <div id="pdfReportText" style="white-space: pre-wrap; line-height: 1.6; margin-bottom: 15px;"></div>
             <div id="pdfClinicalPearlsSection" style="margin-bottom: 20px; padding: 10px; background: #f0fdf4; border-left: 3px solid #16a34a; font-size: 13px;">
                 <b>CLINICAL PEARLS (BÀI HỌC CỐT LÕI):</b>
-                <div id="pdfClinicalPearlsText" style="white-space: pre-wrap; margin-top: 4px;"></div>
+                <div id="pdfClinicalPearlsText" style="white-space: pre-wrap; margin-top: 4px; font-size: 14px;"></div>
             </div>
             <div id="pdfFooterSignature" style="display: flex; justify-content: flex-end; margin-top: 20px; text-align: center;">
                 <div style="width: 250px;">
@@ -630,26 +633,45 @@
         </div>
     </div>
 
-    <!-- TÍCH HỢP FIREBASE REALTIME DATABASE CÓ KHẢ NĂNG CẤU HÌNH DỘNG -->
+    <!-- TÍCH HỢP FIREBASE REALTIME DATABASE -->
     <script type="module">
         import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getDatabase, ref, set, get, child, remove, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
-        const DEFAULT_DB_URL = "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebaseadatabase.app/";
+        const DEFAULT_DB_URL = "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebaseio.com";
 
-        window.initFirebaseConnection = function() {
-            const currentDbUrl = localStorage.getItem('firebase_db_url') || DEFAULT_DB_URL;
+        window.initFirebaseConnection = async function() {
+            let currentDbUrl = localStorage.getItem('firebase_db_url') || DEFAULT_DB_URL;
+            currentDbUrl = currentDbUrl.replace(/\/+$/, "");
+
+            const syncStatus = document.getElementById('cloudSyncStatus');
+
+            async function fetchRealtimeREST() {
+                try {
+                    const res = await fetch(`${currentDbUrl}/acr_cases.json`);
+                    if (res.ok) {
+                        const data = await res.json() || {};
+                        localStorage.setItem('patient_records', JSON.stringify(data));
+                        if (typeof renderHistoryList === 'function') renderHistoryList();
+                        if (typeof renderMainSidebar === 'function') renderMainSidebar();
+                        if (syncStatus) {
+                            syncStatus.innerText = "☁️ Firebase Synced (Trực tuyến)";
+                            syncStatus.style.background = "#059669";
+                        }
+                    }
+                } catch (err) {
+                    console.error("Lỗi Fetch REST Firebase:", err);
+                }
+            }
+
+            await fetchRealtimeREST();
 
             try {
                 if (getApps().length > 0) {
                     deleteApp(getApps()[0]);
                 }
 
-                const firebaseConfig = {
-                    databaseURL: currentDbUrl
-                };
-
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp({ databaseURL: currentDbUrl });
                 const db = getDatabase(app);
 
                 window.firebaseDB = db;
@@ -660,27 +682,23 @@
                 window.fbRemove = remove;
 
                 const recordsRef = ref(db, 'acr_cases');
+                
                 onValue(recordsRef, (snapshot) => {
                     const data = snapshot.val() || {};
                     localStorage.setItem('patient_records', JSON.stringify(data));
+                    
                     if (typeof renderHistoryList === 'function') renderHistoryList();
                     if (typeof renderMainSidebar === 'function') renderMainSidebar();
                     
-                    const syncStatus = document.getElementById('cloudSyncStatus');
                     if (syncStatus) {
-                        syncStatus.innerText = "☁️ Firebase Synced (acr_cases)";
+                        syncStatus.innerText = "☁️ Firebase Synced (Trực tuyến)";
                         syncStatus.style.background = "#059669";
                     }
                 }, (error) => {
-                    console.error("Firebase Error: ", error);
-                    const syncStatus = document.getElementById('cloudSyncStatus');
-                    if (syncStatus) {
-                        syncStatus.innerText = "⚠️ Cloud Offline";
-                        syncStatus.style.background = "#dc2626";
-                    }
+                    console.warn("Lỗi Realtime Listener:", error);
                 });
             } catch (err) {
-                console.error("Khởi tạo Firebase thất bại: ", err);
+                console.error("Lỗi Khởi tạo SDK Firebase:", err);
             }
         };
 
@@ -688,6 +706,11 @@
     </script>
 
     <script>
+        // Cấu hình worker cho PDF.js
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        }
+
         const defaultTemplates = {
             mri_brain: { title: "MRI Sọ Não Normal", text: `KỸ THUẬT: Khảo sát MRI sọ nào các chuỗi xung T1W, T2W, FLAIR, DWI/ADC trước và sau tiêm đối quang từ.\n\nMÔ TẢ TỔN THƯƠNG:\n- Nhu mô não: Không thấy ổ hạn chế khuếch tán bất thường trên DWI. Nhu mô bán cầu đại não hai bên, thân cầu và tiểu não có tín hiệu đồng nhất.\n- Cấu trúc đường giữa cân đối, hệ thống não thất bình thường.\n- Không thấy tụ máu ngoài hay dưới màng cứng.\n\nKẾT LUẬN:\nHình ảnh MRI sọ não hiện tại chưa phát hiện bất thường.` },
             mri_spine: { title: "MRI Cột Sống Thắt Lưng Normal", text: `KỸ THUẬT: Khảo sát MRI cột sống thắt lưng các mặt cắt Sagittal T1W, T2W, STIR và Axial T2W.\n\nMÔ TẢ TỔN THƯƠNG:\n- Đường cong sinh lý cột sống thắt lưng bình thường.\n- Chiều cao các thân đốt sống bình thường. Các đĩa đệm L1/2 đến L5/S1 không thấy thoát vị.\n- Tủy sống thắt lưng và nón tủy tín hiệu bình thường.\n\nKẾT LUẬN:\nHình ảnh MRI cột sống thắt lưng hiện chưa phát hiện bất thường.` },
@@ -702,13 +725,13 @@
         let geminiMessages = [];
         let currentBase64Image = null;
         let currentBase64Audio = null;
+        let currentDocText = null; // Lưu văn bản trích xuất từ PDF/Word
         let uploadedImagesHistory = [];
         let currentPatientRecordId = null;
         let cropper = null;
         let isAdminAuthenticated = false;
 
         window.onload = function() {
-            // Reset giá trị tìm kiếm về chuỗi rỗng khi tải lại trang
             if (document.getElementById('mainSearchInput')) document.getElementById('mainSearchInput').value = '';
             if (document.getElementById('editorSearchInput')) document.getElementById('editorSearchInput').value = '';
 
@@ -718,6 +741,11 @@
             renderMainSidebar();
             changeReportStyle();
             checkAdminAuthState();
+            
+            if (!localStorage.getItem('firebase_db_url')) {
+                localStorage.setItem('firebase_db_url', "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebaseio.com/");
+            }
+
             const savedKey = localStorage.getItem('gemini_api_key');
             if (!savedKey) toggleModal('apiModal', true);
         };
@@ -743,7 +771,6 @@
             });
         }
 
-        // HÀM BỎ DẤU TIẾNG VIỆT ĐỂ TÌM KIẾM CHÍNH XÁC
         function removeVietnameseTones(str) {
             if (!str) return '';
             return str
@@ -1071,7 +1098,8 @@
             alert('Đã lưu mẫu chuẩn mới!');
         }
 
-        function savePatientRecord() {
+        // LƯU DỮ LIỆU ĐỒNG BỘ TRỰC TIẾP LÊN FIREBASE CLOUD REALTIME
+        async function savePatientRecord() {
             const name = document.getElementById('patientName').value.trim();
             const pid = document.getElementById('patientPid').value.trim();
             if (!name && !pid) { alert('Vui lòng nhập Họ tên hoặc Mã y tế để lưu ca chụp!'); return; }
@@ -1104,17 +1132,23 @@
             records[recordId] = recordData;
             localStorage.setItem('patient_records', JSON.stringify(records));
 
-            if (window.firebaseDB && window.fbRef && window.fbSet) {
-                window.fbSet(window.fbRef(window.firebaseDB, 'acr_cases/' + recordId), recordData)
-                .then(() => {
-                    alert('☁️ Đã lưu bản tin vào node acr_cases trên Firebase!');
-                })
-                .catch((err) => {
-                    console.error("Lỗi khi đẩy lên Cloud: ", err);
-                    alert('⚠️ Đã lưu tại máy cục bộ (Lỗi Cloud: ' + err.message + ')');
+            let currentDbUrl = localStorage.getItem('firebase_db_url') || "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebaseio.com";
+            currentDbUrl = currentDbUrl.replace(/\/+$/, "");
+
+            try {
+                await fetch(`${currentDbUrl}/acr_cases/${recordId}.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(recordData)
                 });
-            } else {
-                alert('Đã lưu dữ liệu ca chụp!');
+                alert('☁️ Đã lưu bản tin lên Firebase Realtime Database!');
+            } catch(e) {
+                if (window.firebaseDB && window.fbRef && window.fbSet) {
+                    window.fbSet(window.fbRef(window.firebaseDB, 'acr_cases/' + recordId), recordData);
+                    alert('☁️ Đã lưu ca chụp lên Cloud qua SDK!');
+                } else {
+                    alert('⚠️ Đã lưu tại máy cục bộ (Hãy kiểm tra lại mạng kết nối)');
+                }
             }
 
             currentPatientRecordId = recordId;
@@ -1293,7 +1327,6 @@
             document.getElementById('reportEditor').value = '';
             document.getElementById('clinicalPearlsEditor').value = '';
             
-            // Xóa nội dung tìm kiếm trong ô editor khi tạo ca mới
             if (document.getElementById('editorSearchInput')) {
                 document.getElementById('editorSearchInput').value = '';
                 renderHistoryList();
@@ -1304,7 +1337,7 @@
             document.getElementById(modalId).style.display = show ? 'flex' : 'none';
             if (show && modalId === 'apiModal') {
                 document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-                document.getElementById('firebaseUrlInput').value = localStorage.getItem('firebase_db_url') || "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebaseadatabase.app/";
+                document.getElementById('firebaseUrlInput').value = localStorage.getItem('firebase_db_url') || "https://radiology-quiz-12cce-default-rtdb.asia-southeast1.firebaseio.com/";
             }
         }
 
@@ -1420,11 +1453,58 @@
             reader.readAsDataURL(file);
         }
 
+        // HÀM XỬ LÝ UPLOAD FILE TÀI LIỆU (PDF, WORD, TXT)
+        async function handleDocumentSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            clearSelectedMedia();
+            document.getElementById('fileName').innerText = `⏳ Đang đọc file: ${file.name}...`;
+            document.getElementById('previewContainer').style.display = 'flex';
+
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            try {
+                if (ext === 'txt') {
+                    const text = await file.text();
+                    currentDocText = { filename: file.name, text: text };
+                } else if (ext === 'pdf') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    let fullText = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const tokenized = await page.getTextContent();
+                        const pageText = tokenized.items.map(token => token.str).join(' ');
+                        fullText += `--- Trang ${i} ---\n` + pageText + '\n\n';
+                    }
+                    currentDocText = { filename: file.name, text: fullText };
+                } else if (ext === 'docx' || ext === 'doc') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                    currentDocText = { filename: file.name, text: result.value };
+                } else {
+                    alert('Định dạng file không được hỗ trợ! Vui lòng chọn PDF, DOCX hoặc TXT.');
+                    clearSelectedMedia();
+                    return;
+                }
+
+                document.getElementById('fileName').innerText = `📄 File: ${file.name}`;
+            } catch (err) {
+                alert('Lỗi đọc nội dung file: ' + err.message);
+                clearSelectedMedia();
+            }
+        }
+
         function clearSelectedMedia() {
-            currentBase64Image = null; currentBase64Audio = null;
-            document.getElementById('imageInput').value = ''; document.getElementById('audioInput').value = '';
-            document.getElementById('imagePreview').style.display = 'none'; document.getElementById('audioPreview').style.display = 'none';
-            document.getElementById('imageCaptionInput').style.display = 'none'; document.getElementById('imageCaptionInput').value = '';
+            currentBase64Image = null; currentBase64Audio = null; currentDocText = null;
+            document.getElementById('imageInput').value = ''; 
+            document.getElementById('audioInput').value = '';
+            document.getElementById('docInput').value = '';
+            document.getElementById('imagePreview').style.display = 'none'; 
+            document.getElementById('audioPreview').style.display = 'none';
+            document.getElementById('imageCaptionInput').style.display = 'none'; 
+            document.getElementById('imageCaptionInput').value = '';
             document.getElementById('previewContainer').style.display = 'none';
         }
 
@@ -1465,10 +1545,13 @@
             const apiKey = localStorage.getItem('gemini_api_key');
             const captionText = document.getElementById('imageCaptionInput').value.trim();
 
-            if (!text && !currentBase64Image && !currentBase64Audio) return;
+            if (!text && !currentBase64Image && !currentBase64Audio && !currentDocText) return;
             if (!apiKey) { toggleModal('apiModal', true); return; }
 
             let userContentHtml = text;
+            if (currentDocText) {
+                userContentHtml += `<br>📄 <b>[Đính kèm file: ${currentDocText.filename}]</b>`;
+            }
             if (currentBase64Image) {
                 userContentHtml += `<br><figure><img src="${currentBase64Image.fullUrl}">${captionText ? `<figcaption>${captionText}</figcaption>` : ''}</figure>`;
             }
@@ -1477,6 +1560,7 @@
             const userMsgId = addMessageToChat('user', userContentHtml, true);
             const parts = [];
             if (text) parts.push({ text: text });
+            if (currentDocText) parts.push({ text: `\n\n[NỘI DUNG TÀI LIỆU ĐÍNH KÈM (${currentDocText.filename})]:\n${currentDocText.text}` });
             if (captionText) parts.push({ text: `[Chú thích hình ảnh kèm theo: ${captionText}]` });
             if (currentBase64Image) parts.push({ inline_data: { mime_type: currentBase64Image.mime_type, data: currentBase64Image.data } });
             if (currentBase64Audio) parts.push({ inline_data: { mime_type: currentBase64Audio.mime_type, data: currentBase64Audio.data } });
@@ -1602,7 +1686,7 @@ Quy tắc:
                 pearlsSection.style.display = 'none';
             }
 
-            document.getElementById('pdfDoctorName').innerText = document.getElementById('doctorSelect').value || 'BS. Vũ thế Huynh';
+            document.getElementById('pdfDoctorName').innerText = document.getElementById('doctorSelect').value || 'BS. Vũ Thế Huynh';
 
             const pdfGrid = document.getElementById('pdfImageGrid');
             pdfGrid.innerHTML = '';
