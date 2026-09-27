@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LI-RADS v2018 - BS. Vũ Thế Huynh</title>
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #e8f5e9;
+            --border-color: #a5d6a7;
+            --hcc-red: #d32f2f;
+            --warning-orange: #ff8f00;
+        }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f1f8e9; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border-top: 8px solid var(--primary-green); }
+        h2 { color: var(--primary-green); text-align: center; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .author { text-align: center; color: #558b2f; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid var(--light-green); padding-bottom: 10px; }
+        
+        .section { background: var(--light-green); padding: 15px; border-left: 4px solid var(--primary-green); margin-bottom: 15px; border-radius: 5px; }
+        .risk-section { background: #fffde7; border-left-color: #fbc02d; border: 1px solid #fff9c4; }
+        
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: #2e7d32; }
+        select, input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 15px; outline: none; }
+        select:focus, input:focus { border-color: var(--primary-green); box-shadow: 0 0 5px rgba(46, 125, 50, 0.2); }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .button-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .btn-diagnose { background: var(--primary-green); color: #fff; }
+        .btn-diagnose:hover { background: #1b5e20; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-reset { background: #78909c; color: #fff; }
+        .btn-reset:hover { background: #546e7a; }
+        
+        #resultBox { margin-top: 25px; padding: 25px; border-radius: 12px; display: none; background: #fff; border: 2px solid var(--primary-green); }
+        .feature-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .feature-table td { padding: 12px; border-bottom: 1px solid #edf2ed; font-size: 15px; }
+        .val { text-align: right; font-weight: bold; color: #263238; }
+        
+        .highlight-growth { color: var(--hcc-red); background: #ffebee; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .final-res { font-size: 32px; font-weight: 900; text-align: center; margin: 10px 0; padding: 10px; border-radius: 8px; }
+        
+        .prob-box { text-align: center; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px dashed var(--primary-green); }
+        .warning-text { color: #c62828; font-weight: bold; text-align: center; padding: 30px; background: #ffebee; border-radius: 10px; border: 1px solid #ffcdd2; }
+        .copyright { text-align: center; font-size: 12px; color: #9e9e9e; margin-top: 30px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Phân Độ LI-RADS v2018</h2>
+    <div class="author">BS. Vũ Thế Huynh - Chẩn đoán hình ảnh</div>
+
+    <div class="section risk-section">
+        <label>1. Đối tượng nguy cơ cao?</label>
+        <select id="highRisk">
+            <option value="yes">CÓ (Xơ gan, HBV, HCV, tiền sử HCC)</option>
+            <option value="no">KHÔNG (Nguy cơ thấp)</option>
+        </select>
+    </div>
+
+    <div id="mainInputs">
+        <div class="section">
+            <label>2. Kích thước hiện tại (mm):</label>
+            <input type="number" id="currSize" placeholder="VD: 30">
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <label>3. Ngấm thuốc (APHE):</label>
+                <select id="aphe">
+                    <option value="no">Âm tính (-)</option>
+                    <option value="yes">Dương tính (+) - Non-rim</option>
+                </select>
+            </div>
+            <div class="section">
+                <label>4. Thải thuốc (Wash-out):</label>
+                <select id="washout">
+                    <option value="no">Âm tính (-)</option>
+                    <option value="yes">Dương tính (+)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section">
+            <label>5. So sánh phim cũ (Tính tăng trưởng):</label>
+            <div class="grid">
+                <input type="number" id="oldSize" placeholder="Kích thước cũ (mm)">
+                <input type="number" id="months" placeholder="Số tháng cách biệt">
+            </div>
+        </div>
+
+        <div class="section">
+            <label>6. Vỏ bao (Capsule):</label>
+            <select id="capsule">
+                <option value="no">Âm tính (-)</option>
+                <option value="yes">Dương tính (+)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="button-row">
+        <button class="btn btn-diagnose" onclick="run()">PHÂN TÍCH KẾT QUẢ</button>
+        <button class="btn btn-reset" onclick="resetForm()">LÀM MỚI</button>
+    </div>
+
+    <div id="resultBox">
+        <div id="resOutput">
+            <div id="resLabel" class="final-res"></div>
+            <table class="feature-table">
+                <tr><td>Kích thước tổn thương</td><td class="val" id="showSize"></td></tr>
+                <tr><td>Mức độ tăng trưởng</td><td class="val" id="showGrowth"></td></tr>
+                <tr><td>Các dấu hiệu chính</td><td class="val" id="showMajors"></td></tr>
+            </table>
+            <div class="prob-box" id="probContainer">
+                <div id="showProb" style="font-size: 22px; font-weight: bold; margin-bottom: 5px;"></div>
+                <div id="showAction" style="font-size: 15px; color: #37474f; line-height: 1.4;"></div>
+            </div>
+        </div>
+        <div id="warningOutput" class="warning-text" style="display:none;">
+            ⚠ CHÚ Ý: Bệnh nhân không thuộc nhóm nguy cơ cao.<br><br>
+            Tiêu chuẩn LI-RADS không áp dụng cho trường hợp này. Vui lòng đánh giá theo phân loại u gan lành tính hoặc sử dụng tiêu chuẩn khác.
+        </div>
+    </div>
+
+    <div class="copyright">© 2026 Hệ thống hỗ trợ chẩn đoán | Phát triển bởi BS. Vũ Thế Huynh</div>
+</div>
+
+<script>
+    function resetForm() {
+        document.getElementById('highRisk').value = "yes";
+        document.getElementById('currSize').value = "";
+        document.getElementById('oldSize').value = "";
+        document.getElementById('months').value = "";
+        document.getElementById('aphe').value = "no";
+        document.getElementById('washout').value = "no";
+        document.getElementById('capsule').value = "no";
+        document.getElementById('resultBox').style.display = 'none';
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function run() {
+        const isHighRisk = document.getElementById('highRisk').value === 'yes';
+        const resultBox = document.getElementById('resultBox');
+        const resOutput = document.getElementById('resOutput');
+        const warningOutput = document.getElementById('warningOutput');
+
+        resultBox.style.display = 'block';
+
+        if (!isHighRisk) {
+            resOutput.style.display = 'none';
+            warningOutput.style.display = 'block';
+            resultBox.style.borderColor = "#c62828";
+            return;
+        } else {
+            resOutput.style.display = 'block';
+            warningOutput.style.display = 'none';
+            resultBox.style.borderColor = "#2e7d32";
+        }
+
+        const cSize = parseFloat(document.getElementById('currSize').value) || 0;
+        const oSize = parseFloat(document.getElementById('oldSize').value) || 0;
+        const months = parseFloat(document.getElementById('months').value) || 0;
+        const aphe = document.getElementById('aphe').value === 'yes';
+        const washout = document.getElementById('washout').value === 'yes';
+        const capsule = document.getElementById('capsule').value === 'yes';
+
+        if (cSize === 0) { alert("Bác sĩ vui lòng nhập kích thước hiện tại!"); return; }
+
+        let growthPct = 0;
+        let isThresholdGrowth = false;
+        let growthText = "Không có dữ liệu đối chiếu";
+        
+        if (oSize > 0) {
+            growthPct = ((cSize - oSize) / oSize) * 100;
+            let formattedPct = Math.round(growthPct * 10) / 10;
+            growthText = `Tăng ${formattedPct}% (${oSize}mm ➜ ${cSize}mm)`;
+
+            if ((months > 0 && months <= 6 && growthPct >= 50) || (months > 6 && growthPct >= 100)) {
+                isThresholdGrowth = true;
+                growthText = `<span class="highlight-growth">${growthText} ⚠ ĐẠT NGƯỠNG</span>`;
+            }
+        }
+
+        let majorCount = 0;
+        if (washout) majorCount++;
+        if (capsule) majorCount++;
+        if (isThresholdGrowth) majorCount++;
+
+        let cat = "LR-3";
+        let prob = "38%";
+        let color = "#fbc02d"; // Vàng
+        let act = "Theo dõi sát bằng hình ảnh học sau 3-6 tháng.";
+
+        if (aphe) {
+            if (cSize < 10) cat = (majorCount >= 1) ? "LR-4" : "LR-3";
+            else if (cSize < 20) {
+                if (washout || isThresholdGrowth) cat = "LR-5";
+                else if (capsule) cat = "LR-4";
+                else cat = "LR-3";
+            } else cat = (majorCount >= 1) ? "LR-5" : "LR-4";
+        } else {
+            if (cSize < 20) cat = (majorCount >= 2) ? "LR-4" : "LR-3";
+            else cat = (majorCount >= 1) ? "LR-4" : "LR-3";
+        }
+
+        if (cat === "LR-5") { 
+            prob = "95%"; color = "#d32f2f"; 
+            act = "<strong>Chẩn đoán xác định HCC.</strong> Đề nghị hội chẩn chuyên khoa để bắt đầu điều trị."; 
+        }
+        else if (cat === "LR-4") { 
+            prob = "74%"; color = "#ff8f00"; 
+            act = "<strong>Nghi ngờ cao HCC.</strong> Cần chụp thêm MRI gan với thuốc tương phản đặc hiệu hoặc sinh thiết."; 
+        }
+
+        const resLabel = document.getElementById('resLabel');
+        resLabel.innerText = "KẾT LUẬN: " + cat;
+        resLabel.style.color = color;
+        resLabel.style.backgroundColor = color + "15"; // Thêm độ trong suốt cho nền chữ kết luận
+        
+        document.getElementById('showSize').innerText = cSize + " mm";
+        document.getElementById('showGrowth').innerHTML = growthText;
+        
+        let signs = [];
+        if (aphe) signs.push("APHE (+)");
+        if (washout) signs.push("Wash-out (+)");
+        if (capsule) signs.push("Vỏ bao (+)");
+        if (isThresholdGrowth) signs.push("Tăng trưởng đạt ngưỡng");
+        document.getElementById('showMajors').innerText = signs.length > 0 ? signs.join(", ") : "Không có dấu hiệu chính điển hình";
+        
+        const showProb = document.getElementById('showProb');
+        showProb.innerText = "Xác suất HCC: " + prob;
+        showProb.style.color = color;
+        
+        document.getElementById('showAction').innerHTML = act;
+        resultBox.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>
