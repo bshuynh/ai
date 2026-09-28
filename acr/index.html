@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bản Tin Chẩn Đoán Hình Ảnh</title>
+    <title>Bản Tin Y Khoa Lâm Sàng - Chẩn Đoán Hình Ảnh</title>
     <!-- Thư viện xuất PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Thư viện Cropper.js cắt ảnh -->
@@ -68,7 +68,7 @@
             box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
         }
 
-        /* KHU VỰC BẢN TIN - TẤT CẢ FONT CHỮ SIZE 18PX */
+        /* KHU VỰC BẢN TIN */
         .newsletter-view { 
             flex: 1; 
             background: white; 
@@ -89,7 +89,6 @@
         .paper-meta-box h4 { font-size: 20px; margin-bottom: 6px; color: #0369a1; font-weight: bold; }
         .paper-meta-box p { font-size: 18px; color: #334155; }
 
-        /* CÁC MỤC CHÍNH IN ĐẬM & CỠ CHỮ LỚN */
         .section-title { 
             font-size: 18px; 
             font-weight: bold; 
@@ -157,6 +156,14 @@
             text-align: center;
             color: #64748b;
             font-size: 18px;
+            margin-top: 12px;
+        }
+
+        .quiz-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
             margin-top: 12px;
         }
 
@@ -281,10 +288,10 @@
 </head>
 <body>
 
-    <!-- TRANG CHÍNH: BẢN TIN Y KHOA-CHẨN ĐOÁN HÌNH ẢNH -->
+    <!-- TRANG CHÍNH: BẢN TIN Y KHOA LÂM SÀNG -->
     <header class="main-header">
         <div class="logo">
-            📑 BẢN TIN Y KHOA-CHẨN ĐOÁN HÌNH ẢNH
+            📑 BẢN TIN Y KHOA LÂM SÀNG 
             <span class="admin-badge" id="adminBadgeText">🔒 Chưa xác thực Admin</span>
             <span class="cloud-badge" id="cloudSyncStatus">☁️ Đang kết nối Cloud...</span>
         </div>
@@ -316,7 +323,7 @@
             <div class="paper-content">
                 <div class="paper-header">
                     <div>
-                        <div class="paper-title">BẢN TIN CHẨN ĐOÁN HÌNH ẢNH</div>
+                        <div class="paper-title">BẢN TIN Y KHOA LÂM SÀNG</div>
                         <div class="paper-subtitle">Chuyên san Chẩn đoán Hình ảnh</div>
                     </div>
                     <div class="case-tag" id="mainCaseTag">CASE STUDY</div>
@@ -374,6 +381,16 @@
                 <div id="peerReviewUnlockedArea" class="peer-review-box" style="display: none;">
                     <div id="mainPeerReviewContent" style="white-space: pre-wrap;">Chưa có đánh giá đồng kiểm cho ca này.</div>
                 </div>
+
+                <!-- MỤC 6 MỚI THÊM: TRẮC NGHIỆM KIẾN THỨC MỨC ĐỘ KHÓ -->
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>6. TRẮC NGHIỆM KIẾN THỨC NÂNG CAO (5 CÂU HỎI KHÓ)</span>
+                    <button class="btn btn-primary" id="btnSubmitQuiz" style="font-size: 13px; padding: 4px 12px; background-color: #4f46e5; display: none;" onclick="checkQuizAnswers()">🎯 Nộp bài & Chấm điểm</button>
+                </div>
+
+                <div id="mainQuizContainer" class="quiz-box">
+                    <div id="mainQuizContent" style="color: #64748b; font-size: 16px;">Chưa có bộ câu hỏi trắc nghiệm cho ca lâm sàng này.</div>
+                </div>
             </div>
         </div>
     </div>
@@ -390,7 +407,7 @@
         <div class="editor-modal-header">
             <div class="editor-modal-title">
                 <h2>Hệ Thống Phân Tích & Quản Lý Báo Cáo Chẩn Đoán Hình Ảnh AI</h2>
-                <div class="author-dedication">Tác giả: Bs Vũ Thế Huynh • KÍNH TẶNG KHOA CDHA BVDKKV THỦ ĐỨC 08/2026</div>
+                <div class="author-dedication">Tác giả: Bs Vũ Thế Huynh • KÍNH TẶNG TTYT QUÂN DÂN Y ĐẶC KHU CÔN ĐẢO 08/2026</div>
             </div>
             <div class="header-actions">
                 <button class="btn btn-success" onclick="savePatientRecord()">💾 Lưu ca chụp (Cloud)</button>
@@ -487,10 +504,10 @@
                 </div>
             </div>
 
-            <!-- Cột 4: Báo cáo & Peer Review AI -->
+            <!-- Cột 4: Báo cáo, Peer Review & Trắc nghiệm AI -->
             <div class="panel report-panel">
                 <div class="panel-header">
-                    <span>Báo Cáo, Clinical Pearls & Peer Review</span>
+                    <span>Báo Cáo, Peer Review & Quiz Trắc Nghiệm</span>
                     <div style="display: flex; gap: 4px;">
                         <button class="btn btn-secondary" style="padding: 3px 6px;" onclick="copyReport()">📋 Copy</button>
                         <button class="btn btn-primary" style="padding: 3px 6px;" onclick="exportToPDF()">📄 Xuất PDF</button>
@@ -515,20 +532,28 @@
                         </select>
                     </div>
                 </div>
-                <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden; gap: 6px; padding-top: 6px;">
-                    <textarea id="reportEditor" class="report-editor" style="flex: 2;" placeholder="Báo cáo kết quả sẽ tự động xuất ra tại đây..."></textarea>
+                <div style="display: flex; flex-direction: column; flex: 1; overflow-y: auto; gap: 6px; padding: 6px 4px 6px 0;">
+                    <textarea id="reportEditor" class="report-editor" style="min-height: 120px; flex: 1.5;" placeholder="Báo cáo kết quả sẽ tự động xuất ra tại đây..."></textarea>
                     
                     <div style="border-top: 1px dashed var(--border-color); padding-top: 4px; display: flex; flex-direction: column; flex: 1;">
                         <label style="font-size: 11px; font-weight: bold; color: #16a34a; margin-bottom: 2px;">💡 Clinical Pearls (Bài Học Cốt Lõi):</label>
-                        <textarea id="clinicalPearlsEditor" class="report-editor" style="flex: 1; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 6px; font-size: 13px;" placeholder="Nhập bài học lâm sàng cốt lõi..."></textarea>
+                        <textarea id="clinicalPearlsEditor" class="report-editor" style="min-height: 60px; flex: 1; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 6px; font-size: 13px;" placeholder="Nhập bài học lâm sàng cốt lõi..."></textarea>
                     </div>
 
-                    <div style="border-top: 1px dashed var(--border-color); padding-top: 4px; display: flex; flex-direction: column; flex: 1.2;">
+                    <div style="border-top: 1px dashed var(--border-color); padding-top: 4px; display: flex; flex-direction: column; flex: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                             <label style="font-size: 11px; font-weight: bold; color: #d97706;">📝 Peer Review (Đánh Giá Đồng Kiểm):</label>
                             <button class="btn btn-warning" style="font-size: 10px; padding: 1px 6px;" onclick="generatePeerReviewWithAI()">🔍 AI Peer Review</button>
                         </div>
-                        <textarea id="peerReviewEditor" class="report-editor" style="flex: 1; background: #fffbe3; border: 1px solid #fde68a; border-radius: 4px; padding: 6px; font-size: 13px;" placeholder="Bấm nút 'AI Peer Review' để AI đánh giá độc lập hoặc tự nhập nhận xét đồng kiểm..."></textarea>
+                        <textarea id="peerReviewEditor" class="report-editor" style="min-height: 70px; flex: 1; background: #fffbe3; border: 1px solid #fde68a; border-radius: 4px; padding: 6px; font-size: 13px;" placeholder="Bấm nút 'AI Peer Review' để AI đánh giá độc lập hoặc tự nhập nhận xét đồng kiểm..."></textarea>
+                    </div>
+
+                    <div style="border-top: 1px dashed var(--border-color); padding-top: 4px; display: flex; flex-direction: column; flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <label style="font-size: 11px; font-weight: bold; color: #4f46e5;">❓ Trắc Nghiệm Kiến Thức (5 Câu Mức Độ Khó):</label>
+                            <button class="btn btn-primary" style="font-size: 10px; padding: 1px 6px; background-color: #4f46e5;" onclick="generateQuizWithAI()">🧠 AI Tạo Quiz (5 Câu Khó)</button>
+                        </div>
+                        <textarea id="quizEditor" class="report-editor" style="min-height: 80px; flex: 1; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 4px; padding: 6px; font-size: 13px;" placeholder="Bấm nút 'AI Tạo Quiz' để AI soạn 5 câu hỏi trắc nghiệm mức độ khó kèm đáp án & giải thích..."></textarea>
                     </div>
                 </div>
             </div>
@@ -702,8 +727,6 @@
                     const res = await fetch(`${currentDbUrl}/acr_cases.json`);
                     if (res.ok) {
                         const data = await res.json() || {};
-                        
-                        // Bọc trong try-catch để tránh crash do LocalStorage đầy
                         try {
                             localStorage.setItem('patient_records', JSON.stringify(data));
                         } catch (err) {
@@ -780,7 +803,7 @@
             ct_chest: { title: "CT Lồng Ngực Normal", text: `KỸ THUẬT: Chụp cắt lớp vi tính lồng ngực lớp cắt mỏng độ phân giải cao (HRCT).\n\nMÔ TẢ TỔN THƯƠNG:\n- Nhu mô phổi hai bên nở tốt, không thấy đông đặc hay tổn thương dạng nốt.\n- Trung thất không thấy hạch toàn bộ. Không thấy dịch khoang màng phổi.\n\nKẾT LUẬN:\nHình ảnh CT lồng ngực chưa phát hiện bất thường.` }
         };
 
-        const defaultDoctors = ["[cite: 8]BS. Vũ Thế Huynh", "BS. Nguyễn Văn A"];
+        const defaultDoctors = ["BS. Vũ Thế Huynh", "BS. Nguyễn Văn A"];
         const DEFAULT_PIN = "1234";
 
         let currentTemplates = {};
@@ -793,6 +816,7 @@
         let cropper = null;
         let isAdminAuthenticated = false;
         let isPeerReviewUnlocked = false;
+        let currentQuizAnswers = [];
 
         window.onload = function() {
             if (document.getElementById('mainSearchInput')) document.getElementById('mainSearchInput').value = '';
@@ -1054,7 +1078,7 @@
                         <span class="case-number-badge">${item.sttCode}</span>
                     </div>
                     <div class="history-item-sub">Mã YT: <b>${item.pid}</b></div>
-                    <div class="history-item-sub">BS: ${item.doctorName || '[cite: 8]BS. Vũ Thế Huynh'}</div>
+                    <div class="history-item-sub">BS: ${item.doctorName || 'BS. Vũ Thế Huynh'}</div>
                 `;
                 div.onclick = () => displayCaseOnMainView(item.id);
                 listContainer.appendChild(div);
@@ -1071,19 +1095,22 @@
             document.getElementById('mainCaseTag').innerText = `CA ${item.sttCode}`;
             document.getElementById('mainCaseTitle').innerText = item.diagnosis || 'Chưa có tiêu đề ca bệnh';
             document.getElementById('mainPatientName').innerText = `${item.name} (${item.yob || 'N/A'})`;
-            document.getElementById('mainDoctorName').innerText = item.doctorName || '[cite: 8]BS. Vũ Thế Huynh';
+            document.getElementById('mainDoctorName').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
             document.getElementById('mainClinicalSummary').innerText = item.diagnosis || 'Chưa cập nhật thông tin lâm sàng.';
             document.getElementById('mainReportText').innerText = item.reportText || 'Chưa có báo cáo kết quả.';
             document.getElementById('mainClinicalPearls').innerText = item.clinicalPearls || 'Chưa có bài học cốt lõi cho ca lâm sàng này.';
             document.getElementById('mainPeerReviewContent').innerText = item.peerReviewText || 'Chưa có đánh giá đồng kiểm cho ca này.';
             
             document.getElementById('infoStt').innerText = item.sttCode;
-            document.getElementById('infoDoctor').innerText = item.doctorName || '[cite: 8]BS. Vũ Thế Huynh';
+            document.getElementById('infoDoctor').innerText = item.doctorName || 'BS. Vũ Thế Huynh';
             document.getElementById('infoPatient').innerText = item.name;
             document.getElementById('infoPid').innerText = item.pid;
 
             isPeerReviewUnlocked = false;
             updatePeerReviewVisibility();
+
+            // Render phần Quiz trắc nghiệm
+            renderMainQuiz(item.quizData);
 
             const gallery = document.getElementById('mainImageGallery');
             gallery.innerHTML = '';
@@ -1209,7 +1236,6 @@
             alert('Đã lưu mẫu chuẩn mới!');
         }
 
-        // --- HÀM LƯU CA BỆNH ĐÃ ĐƯỢC FIX LỖI CLOUD ---
         async function savePatientRecord() {
             const name = document.getElementById('patientName').value.trim();
             const pid = document.getElementById('patientPid').value.trim();
@@ -1225,7 +1251,7 @@
                 yob: document.getElementById('patientYob').value,
                 pid: pid || 'Không có',
                 diagnosis: document.getElementById('patientDiagnosis').value,
-                doctorName: document.getElementById('doctorSelect').value || '[cite: 8]BS. Vũ Thế Huynh',
+                doctorName: document.getElementById('doctorSelect').value || 'BS. Vũ Thế Huynh',
                 modality: document.getElementById('modalitySelect').value,
                 templateText: document.getElementById('templateEditor').value,
                 chatHtml: document.getElementById('chatBox').innerHTML,
@@ -1233,6 +1259,7 @@
                 reportText: document.getElementById('reportEditor').value,
                 clinicalPearls: document.getElementById('clinicalPearlsEditor').value,
                 peerReviewText: document.getElementById('peerReviewEditor').value,
+                quizData: document.getElementById('quizEditor').value,
                 uploadedImagesHistory: uploadedImagesHistory,
                 selectedFont: document.getElementById('fontFamilySelect').value,
                 selectedFontSize: document.getElementById('fontSizeSelect').value,
@@ -1240,14 +1267,13 @@
                 updatedAt: new Date().toLocaleString('vi-VN')
             };
 
-            // Bọc try-catch để vượt qua lỗi QuotaExceededError (5MB Limit) của LocalStorage khi lưu file ảnh Base64
             let localSaveFailed = false;
             try {
                 const records = getLocalRecords();
                 records[recordId] = recordData;
                 localStorage.setItem('patient_records', JSON.stringify(records));
             } catch (err) {
-                console.warn("Lỗi lưu LocalStorage (có thể do quá dung lượng 5MB):", err);
+                console.warn("Lỗi lưu LocalStorage:", err);
                 localSaveFailed = true;
                 if (!window.fallbackRecords) window.fallbackRecords = {};
                 window.fallbackRecords[recordId] = recordData;
@@ -1263,7 +1289,6 @@
                     body: JSON.stringify(recordData)
                 });
                 
-                // Cải tiến 2: Fetch không throw lỗi cho HTTP 4xx, 5xx (từ chối quyền do Rules Firebase). Cần xử lý tường minh:
                 if (!response.ok) {
                     throw new Error(`HTTP Error: ${response.status}`);
                 }
@@ -1273,7 +1298,7 @@
                 alert(successMsg);
                 
             } catch(e) {
-                console.warn("Lưu bằng REST API thất bại, chuyển sang chế độ Firebase SDK:", e);
+                console.warn("Lưu bằng REST API thất bại, chuyển sang SDK:", e);
                 
                 if (window.firebaseDB && window.fbRef && window.fbSet) {
                     try {
@@ -1281,7 +1306,7 @@
                         alert('☁️ Đã lưu ca chụp lên Cloud qua Firebase SDK!');
                     } catch (sdkErr) {
                         console.error("Lỗi lưu bằng SDK:", sdkErr);
-                        alert('❌ Không thể lưu lên Cloud! Vui lòng kiểm tra lại cấu hình Firebase Database Rules (Phân quyền bảo mật) hoặc mạng Internet.');
+                        alert('❌ Không thể lưu lên Cloud! Vui lòng kiểm tra lại cấu hình Firebase Database Rules.');
                     }
                 } else {
                     alert('❌ Không thể lưu lên Cloud! Firebase chưa kết nối hoặc cấu hình sai.');
@@ -1350,6 +1375,7 @@
             document.getElementById('reportEditor').value = record.reportText || '';
             document.getElementById('clinicalPearlsEditor').value = record.clinicalPearls || '';
             document.getElementById('peerReviewEditor').value = record.peerReviewText || '';
+            document.getElementById('quizEditor').value = record.quizData || '';
             
             geminiMessages = record.geminiMessages || [];
             uploadedImagesHistory = record.uploadedImagesHistory || [];
@@ -1507,6 +1533,7 @@
             document.getElementById('reportEditor').value = '';
             document.getElementById('clinicalPearlsEditor').value = '';
             document.getElementById('peerReviewEditor').value = '';
+            document.getElementById('quizEditor').value = '';
             
             if (document.getElementById('editorSearchInput')) {
                 document.getElementById('editorSearchInput').value = '';
@@ -1867,6 +1894,174 @@ Hãy trình bày nhận xét PEER REVIEW theo các mục chính sau (Không dùn
             }
         }
 
+        /* TÍNH NĂNG MỚI: AI TẠO BỘ 5 CÂU HỎI TRẮC NGHIỆM KHÓ */
+        async function generateQuizWithAI() {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) { toggleModal('apiModal', true); return; }
+
+            const reportText = document.getElementById('reportEditor').value.trim();
+            const clinicalPearls = document.getElementById('clinicalPearlsEditor').value.trim();
+            const clinicalDiagnosis = document.getElementById('patientDiagnosis').value.trim();
+            const quizEditor = document.getElementById('quizEditor');
+
+            if (!reportText) {
+                alert("Vui lòng tạo Báo cáo kết quả trước khi phát sinh bộ câu hỏi trắc nghiệm!");
+                return;
+            }
+
+            quizEditor.value = "⏳ AI đang biên soạn bộ 5 câu hỏi trắc nghiệm mức độ khó kèm đáp án & giải thích...";
+
+            const quizPrompt = `Bạn là một Bác sĩ Chẩn đoán Hình ảnh Chuyên gia kiêm Giảng viên Y khoa cao cấp. Dựa vào thông tin ca bệnh, báo cáo kết quả và clinical pearls sau, hãy tạo BỘ 5 CÂU HỎI TRẮC NGHIỆM MỨC ĐỘ KHÓ (Advanced / Expert Level) để thử thách kiến thức chuyên sâu của người đọc.
+
+THÔNG TIN LÂM SÀNG: ${clinicalDiagnosis || 'Chưa cung cấp'}
+BÁO CÁO KẾT QUẢ:
+${reportText}
+CLINICAL PEARLS:
+${clinicalPearls}
+
+YÊU CẦU ĐỊNH DẠNG TRẢ VỀ:
+Trả về CHÍNH XÁC một mảng JSON (JSON array) chứa đúng 5 object đại diện cho 5 câu hỏi. KHÔNG dùng dấu ** trong văn bản, KHÔNG dùng chữ Hán, KHÔNG viết bất kỳ lời mở đầu hay kết luận nào ngoài chuỗi JSON.
+
+Cấu trúc từng câu hỏi trong JSON:
+[
+  {
+    "id": 1,
+    "question": "Nội dung câu hỏi mức độ khó?",
+    "options": ["A. Lựa chọn A", "B. Lựa chọn B", "C. Lựa chọn C", "D. Lựa chọn D"],
+    "correct": 0,
+    "explanation": "Giải thích chi tiết vì sao đáp án đúng và phân tích lý do các phương án còn lại sai."
+  },
+  ... (đủ 5 câu)
+]`;
+
+            const quizMessages = [...geminiMessages, { role: 'user', parts: [{ text: quizPrompt }] }];
+
+            try {
+                let response = cleanText(await callGeminiApi(apiKey, quizMessages));
+                response = response.replace(/^```json/gi, '').replace(/^```/gi, '').replace(/```$/gi, '').trim();
+                quizEditor.value = response;
+            } catch (err) {
+                quizEditor.value = `❌ Lỗi tạo Quiz: ${err.message}`;
+            }
+        }
+
+        /* TÍNH NĂNG MỚI: RENDER QUIZ TƯƠNG TÁC TRÊN BẢN TIN */
+        function renderMainQuiz(quizDataRaw) {
+            const quizContainer = document.getElementById('mainQuizContainer');
+            const submitBtn = document.getElementById('btnSubmitQuiz');
+            currentQuizAnswers = [];
+
+            if (!quizDataRaw || !quizDataRaw.trim()) {
+                quizContainer.innerHTML = '<div style="color: #64748b; font-size: 16px;">Chưa có bộ câu hỏi trắc nghiệm cho ca lâm sàng này.</div>';
+                if (submitBtn) submitBtn.style.display = 'none';
+                return;
+            }
+
+            let quizList = null;
+            try {
+                const cleaned = quizDataRaw.replace(/^```json/gi, '').replace(/^```/gi, '').replace(/```$/gi, '').trim();
+                quizList = JSON.parse(cleaned);
+            } catch (e) {
+                quizContainer.innerHTML = `<div style="white-space: pre-wrap; font-size: 16px; color: #1e293b;">${quizDataRaw}</div>`;
+                if (submitBtn) submitBtn.style.display = 'none';
+                return;
+            }
+
+            if (!Array.isArray(quizList) || quizList.length === 0) {
+                quizContainer.innerHTML = `<div style="white-space: pre-wrap; font-size: 16px; color: #1e293b;">${quizDataRaw}</div>`;
+                if (submitBtn) submitBtn.style.display = 'none';
+                return;
+            }
+
+            currentQuizAnswers = quizList;
+
+            let html = '<div id="quizScoreBox" style="display:none; background:#e0f2fe; border:1px solid #0284c7; padding:12px 16px; border-radius:6px; margin-bottom:16px; font-weight:bold; color:#0369a1; font-size:18px;"></div>';
+
+            quizList.forEach((q, qIndex) => {
+                html += `
+                    <div class="quiz-item-card" id="quizCard_${qIndex}" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:16px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="font-weight:bold; color:#0f172a; font-size:18px; margin-bottom:12px; line-height:1.5;">
+                            <span style="background:#4f46e5; color:white; padding:3px 8px; border-radius:4px; font-size:14px; margin-right:8px; display:inline-block;">Câu ${qIndex + 1}</span>
+                            ${q.question}
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+                `;
+
+                if (Array.isArray(q.options)) {
+                    q.options.forEach((opt, optIndex) => {
+                        html += `
+                            <label class="quiz-option-label" id="optLabel_${qIndex}_${optIndex}" style="display:flex; align-items:center; gap:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; cursor:pointer; font-size:16px; transition:all 0.2s;">
+                                <input type="radio" name="quiz_q_${qIndex}" value="${optIndex}" style="width:18px; height:18px; cursor:pointer;">
+                                <span>${opt}</span>
+                            </label>
+                        `;
+                    });
+                }
+
+                html += `
+                        </div>
+                        <div class="quiz-explanation-box" id="quizExp_${qIndex}" style="display:none; background:#f0fdf4; border-left:4px solid #16a34a; padding:10px 14px; border-radius:0 6px 6px 0; margin-top:10px; font-size:16px; color:#14532d; line-height:1.5;">
+                            <b>💡 Giải thích chi tiết:</b> ${q.explanation || 'Không có giải thích.'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            quizContainer.innerHTML = html;
+            if (submitBtn) submitBtn.style.display = 'inline-block';
+        }
+
+        /* HÀM NỘP BÀI VÀ CHẤM ĐIỂM QUIZ */
+        function checkQuizAnswers() {
+            if (!currentQuizAnswers || currentQuizAnswers.length === 0) return;
+
+            let correctCount = 0;
+            let totalQuestions = currentQuizAnswers.length;
+
+            currentQuizAnswers.forEach((q, qIndex) => {
+                const selectedRadio = document.querySelector(`input[name="quiz_q_${qIndex}"]:checked`);
+                const correctOptIndex = q.correct;
+                const expBox = document.getElementById(`quizExp_${qIndex}`);
+
+                if (expBox) expBox.style.display = 'block';
+
+                if (Array.isArray(q.options)) {
+                    q.options.forEach((_, optIndex) => {
+                        const label = document.getElementById(`optLabel_${qIndex}_${optIndex}`);
+                        if (!label) return;
+
+                        label.style.borderColor = '#cbd5e1';
+                        label.style.background = '#f8fafc';
+                        label.style.fontWeight = 'normal';
+
+                        if (optIndex === correctOptIndex) {
+                            label.style.borderColor = '#16a34a';
+                            label.style.background = '#dcfce7';
+                            label.style.fontWeight = 'bold';
+                        }
+
+                        if (selectedRadio && parseInt(selectedRadio.value) === optIndex) {
+                            if (optIndex !== correctOptIndex) {
+                                label.style.borderColor = '#ef4444';
+                                label.style.background = '#fee2e2';
+                            }
+                        }
+                    });
+                }
+
+                if (selectedRadio && parseInt(selectedRadio.value) === correctOptIndex) {
+                    correctCount++;
+                }
+            });
+
+            const scoreBox = document.getElementById('quizScoreBox');
+            if (scoreBox) {
+                scoreBox.style.display = 'block';
+                scoreBox.innerHTML = `🎯 Kết quả trắc nghiệm: <b>${correctCount}/${totalQuestions}</b> câu đúng (${Math.round((correctCount/totalQuestions)*100)}%)`;
+                scoreBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
         async function callGeminiApi(apiKey, contentsPayload) {
             const selectedModel = document.getElementById('modelSelect').value;
             const models = [selectedModel, 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro'];
@@ -1907,7 +2102,7 @@ Hãy trình bày nhận xét PEER REVIEW theo các mục chính sau (Không dùn
                 pearlsSection.style.display = 'none';
             }
 
-            document.getElementById('pdfDoctorName').innerText = document.getElementById('doctorSelect').value || '[cite: 8]BS. Vũ Thế Huynh';
+            document.getElementById('pdfDoctorName').innerText = document.getElementById('doctorSelect').value || 'BS. Vũ Thế Huynh';
 
             const pdfGrid = document.getElementById('pdfImageGrid');
             pdfGrid.innerHTML = '';
