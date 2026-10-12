@@ -190,7 +190,7 @@
     <header>
         <div class="header-title">
             <h2>Hệ Thống Phân Tích & Quản Lý Báo Cáo Chẩn Đoán Hình Ảnh AI</h2>
-            <div class="author-dedication">Tác giả: Bs Vũ Thế Huynh • KÍNH TẶNG TTYT QUÂN DÂN Y ĐẶC KHU CÔN ĐẢO 08/2026</div>
+            <div class="author-dedication">Tác giả: Bs Vũ Thế Huynh • KÍNH TẶNG KHOA CĐHA BVDKKV THỦ ĐỨC 10/2026</div>
         </div>
         <div class="header-actions">
             <button class="btn btn-success" onclick="savePatientRecord()">💾 Lưu ca chụp</button>
@@ -446,6 +446,86 @@
     </div>
 
     <script>
+        /* --- MODULE LƯU TRỮ CƠ SỞ DỮ LIỆU INDEXEDDB NÂNG CAO DUNG LƯỢNG (HÀNG TỶ BYTES) --- */
+        const DB_NAME = 'RadiologyAssistantDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'patient_records';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveRecordToDB(record) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.put(record);
+                req.onsuccess = () => resolve();
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function getAllRecordsFromDB() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function getRecordFromDB(id) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.get(id);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function deleteRecordFromDB(id) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        /* Tự động di chuyển dữ liệu từ localStorage cũ sang IndexedDB */
+        async function migrateLocalStorageToIDB() {
+            try {
+                const oldRecordsStr = localStorage.getItem('patient_records');
+                if (oldRecordsStr) {
+                    const oldRecords = JSON.parse(oldRecordsStr);
+                    for (let key in oldRecords) {
+                        await saveRecordToDB(oldRecords[key]);
+                    }
+                    localStorage.removeItem('patient_records');
+                    console.log("Đã chuyển đổi dữ liệu từ localStorage sang IndexedDB thành công!");
+                }
+            } catch (e) {
+                console.error("Lỗi khi chuyển đổi dữ liệu cũ:", e);
+            }
+        }
+
         const defaultTemplates = {
             mri_brain: { title: "Cộng Hưởng Từ Sọ Não Bình Thường", text: `KỸ THUẬT: Khảo sát cộng hưởng từ sọ nền các chuỗi xung T1W, T2W, FLAIR, DWI/ADC trước và sau tiêm thuốc đối quang từ.\n\nMÔ TẢ TỔN THƯƠNG:\n- Nhu mô đại não, thân nền và tiểu não hai bên có tín hiệu bình thường.\n- Không thấy vùng hạn chế khuếch tán bất thường trên DWI.\n- Cấu trúc đường giữa cân đối, hệ thống não thất bình thường.\n- Không thấy tụ máu ngoài hay dưới màng cứng.\n\nKẾT LUẬN:\nHình ảnh cộng hưởng từ sọ nền hiện chưa phát hiện bất thường.` },
             mri_spine: { title: "Cộng Hưởng Từ Cột Sống Thắt Lưng Bình Thường", text: `KỸ THUẬT: Khảo sát cộng hưởng từ cột sống thắt lưng các mặt cắt dọc T1W, T2W, STIR và mặt cắt ngang T2W.\n\nMÔ TẢ TỔN THƯƠNG:\n- Đường cong sinh lý cột sống thắt lưng bình thường.\n- Chiều cao các thân đốt sống bình thường. Các đĩa đệm L1/2 đến L5/S1 không thấy thoát vị.\n- Tủy sống thắt lưng và nón tủy tín hiệu bình thường.\n\nKẾT LUẬN:\nHình ảnh cộng hưởng từ cột sống thắt lưng hiện chưa phát hiện bất thường.` },
@@ -478,10 +558,11 @@
         let recordingTimer = null;
         let recordingSeconds = 0;
 
-        window.onload = function() {
+        window.onload = async function() {
+            await migrateLocalStorageToIDB();
             initDoctors();
             initTemplates();
-            renderHistoryList();
+            await renderHistoryList();
             changeReportStyle();
             initCanvasEvents();
             const savedKey = localStorage.getItem('gemini_api_key');
@@ -597,8 +678,8 @@
             alert('Đã lưu mẫu chuẩn mới thành công!');
         }
 
-        /* --- HÀM HỖ TRỢ TỐI ƯU/NÉN ẢNH ĐỂ TRÁNH TRÀN BỘ NHỚ LOCALSTORAGE --- */
-        async function compressBase64Image(dataUrl, maxWidth = 800, quality = 0.6) {
+        /* --- HÀM HỖ TRỢ TỐI ƯU/NÉN ẢNH --- */
+        async function compressBase64Image(dataUrl, maxWidth = 1000, quality = 0.7) {
             return new Promise((resolve) => {
                 if (!dataUrl || !dataUrl.startsWith('data:image')) {
                     resolve(dataUrl);
@@ -626,7 +707,7 @@
             });
         }
 
-        /* --- SỬA TỐI ƯU HÀM LƯU CA CHỤP VÀO LOCALSTORAGE --- */
+        /* --- CẬP NHẬT HÀM LƯU CA CHỤP VÀO INDEXEDDB TRÊN MÁY TÍNH --- */
         async function savePatientRecord() {
             const name = document.getElementById('patientName').value.trim();
             const pid = document.getElementById('patientPid').value.trim();
@@ -652,7 +733,7 @@
             const images = tempDiv.querySelectorAll('img');
             for (let img of images) {
                 if (img.src && img.src.startsWith('data:image')) {
-                    img.src = await compressBase64Image(img.src, 600, 0.5);
+                    img.src = await compressBase64Image(img.src, 800, 0.6);
                 }
             }
 
@@ -663,17 +744,16 @@
                     for (let part of msg.parts) {
                         if (part.inline_data && part.inline_data.mime_type.startsWith('image/')) {
                             const fullData = `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
-                            const compressed = await compressBase64Image(fullData, 600, 0.5);
+                            const compressed = await compressBase64Image(fullData, 800, 0.6);
                             part.inline_data.data = compressed.split(',')[1] || part.inline_data.data;
                         }
                     }
                 }
             }
 
-            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
             const recordId = currentPatientRecordId || 'record_' + Date.now();
             
-            records[recordId] = {
+            const recordData = {
                 id: recordId,
                 name: name || 'Chua_Ten',
                 yob: document.getElementById('patientYob').value,
@@ -692,28 +772,24 @@
             };
 
             try {
-                localStorage.setItem('patient_records', JSON.stringify(records));
+                await saveRecordToDB(recordData);
                 currentPatientRecordId = recordId;
-                renderHistoryList();
-                alert('Đã lưu dữ liệu ca chụp thành công!');
+                await renderHistoryList();
+                alert('Đã lưu dữ liệu ca chụp thành công vào bộ nhớ máy tính!');
             } catch (error) {
-                console.error("Lỗi khi lưu dữ liệu vào localStorage:", error);
-                if (error.name === 'QuotaExceededError' || error.code === 22) {
-                    alert('Lỗi: Trình duyệt bị đầy bộ nhớ! Hãy xóa bớt các ca chụp cũ để giải phóng dung lượng.');
-                } else {
-                    alert('Không thể lưu ca chụp: ' + error.message);
-                }
+                console.error("Lỗi khi lưu dữ liệu vào IndexedDB:", error);
+                alert('Không thể lưu ca chụp: ' + error.message);
             }
         }
 
-        function renderHistoryList(filterText = '') {
-            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
+        async function renderHistoryList(filterText = '') {
+            const recordsList = await getAllRecordsFromDB();
             const listContainer = document.getElementById('historyList');
             listContainer.innerHTML = '';
 
-            const keys = Object.keys(records).reverse();
-            keys.forEach(key => {
-                const item = records[key];
+            recordsList.sort((a, b) => b.id.localeCompare(a.id));
+
+            recordsList.forEach(item => {
                 const matchName = item.name.toLowerCase().includes(filterText.toLowerCase());
                 const matchPid = item.pid.toLowerCase().includes(filterText.toLowerCase());
 
@@ -735,13 +811,12 @@
             });
         }
 
-        function filterPatientRecords() {
-            renderHistoryList(document.getElementById('searchPatientInput').value);
+        async function filterPatientRecords() {
+            await renderHistoryList(document.getElementById('searchPatientInput').value);
         }
 
-        function loadPatientRecord(recordId) {
-            const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
-            const record = records[recordId];
+        async function loadPatientRecord(recordId) {
+            const record = await getRecordFromDB(recordId);
             if (!record) return;
 
             currentPatientRecordId = record.id;
@@ -763,14 +838,12 @@
             uploadedImagesHistory = record.uploadedImagesHistory || [];
         }
 
-        function deletePatientRecord(event, recordId) {
+        async function deletePatientRecord(event, recordId) {
             event.stopPropagation();
             if (confirm('Bạn muốn xóa thông tin ca chụp này?')) {
-                const records = JSON.parse(localStorage.getItem('patient_records') || '{}');
-                delete records[recordId];
-                localStorage.setItem('patient_records', JSON.stringify(records));
+                await deleteRecordFromDB(recordId);
                 if (currentPatientRecordId === recordId) resetNewPatient();
-                renderHistoryList();
+                await renderHistoryList();
             }
         }
 
